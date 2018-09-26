@@ -64,6 +64,10 @@ class Window(ttk.Frame):
         super().__init__(master, padding=2)
         # 初始化音乐播放器对象的引用
         self.player = None
+        # 初始化按钮的图片
+        self.play_img = tk.PhotoImage(file="resources/play.png")
+        self.stop_img = tk.PhotoImage(file="resources/stop.png")
+        self.pause_img = tk.PhotoImage(file="resources/pause.png")
         # 从json自动设置UI控件
         create_ui(self, ui_json)
         # 从json自动绑定事件
@@ -76,7 +80,13 @@ class Window(ttk.Frame):
         self.init_music_list_window()
         # 初始化音乐播放列表
         self.music_play_list = []
-        self.grid(row=0, column=0)
+        # 初始化控制按钮图片属性
+        self.init_control_button_img()
+        self.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
+        self.master.columnconfigure(0, weight=1)
+        self.master.rowconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(3, weight=1)
 
     # 初始化音乐循环下拉列表，设置默认的音量值
     def init_default_play_option(self):
@@ -114,7 +124,7 @@ class Window(ttk.Frame):
     def key_event(self, event=None):
         # 摁空格键暂停或恢复音乐播放
         if event.char == " ":
-            self.music_pause()
+            self.music_pause_restore()
         # 右方向键下一首
         elif event.keycode == 39:
             self.next_music()
@@ -127,6 +137,13 @@ class Window(ttk.Frame):
         self.music_stop()
         self.master.destroy()
 
+    def init_control_button_img(self, event=None):
+        # 设置按钮的图片和文字属性
+        self.__dict__["startButton"]["image"] = self.play_img
+        self.__dict__["startButton"]["text"] = "播放"
+        self.__dict__["stopButton"]["image"] = self.stop_img
+        self.__dict__["stopButton"]["text"] = "停止"
+
     def music_start(self, event=None):
         # 设置正在播放的音乐信息
         music_path = self.__dict__["musicPath"].get()
@@ -137,22 +154,26 @@ class Window(ttk.Frame):
 
         music_name = music_path[music_path.rindex("/") + 1:]
         self.__dict__["info"].set(music_name)
-        self.__dict__["pauseButton"]["text"] = "暂停"
-
-        # 如果已经存在播放器，则停止它
-        if self.player:
-            self.__dict__["musicProgressBar"].stop()
-            self.player.stop_state = True
-            time.sleep(1)
-
         # 中文路径必须编码后才可以
         now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
-        self.player = Player(self.__dict__["musicPath"].get().encode('utf-8'), now_volume, self)
-        # 启动进度条
-        self.__dict__["musicProgressBar"].start()
-        self.player.start()
+
+        if self.__dict__["startButton"]["text"] == "播放":
+            self.__dict__["startButton"]["image"] = self.pause_img
+            self.__dict__["startButton"]["text"] = "暂停"
+            self.__dict__["musicProgressBar"].stop()
+            if self.player:
+                self.player.stop_state = True
+                self.player = None
+                time.sleep(1)
+            self.player = Player(self.__dict__["musicPath"].get().encode('utf-8'), now_volume, self)
+            # 启动进度条
+            self.__dict__["musicProgressBar"].start()
+            self.player.start()
+        else:
+            self.music_pause_restore()
 
     def next_music(self, event=None):
+        self.init_control_button_img()
         if self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
         else:
@@ -167,6 +188,7 @@ class Window(ttk.Frame):
                 self.set_music_list_window_selection(index + 1)
 
     def prev_music(self, event=None):
+        self.init_control_button_img()
         if self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
         else:
@@ -192,6 +214,7 @@ class Window(ttk.Frame):
             self.set_music_list_window_selection(index)
 
     def music_stop(self, event=None):
+        self.init_control_button_img()
         self.__dict__["musicProgressBar"].stop()
         if self.player:
             self.player.stop_state = True
@@ -204,14 +227,16 @@ class Window(ttk.Frame):
         elif self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
 
-    def music_pause(self, event=None):
+    def music_pause_restore(self, event=None):
         # 暂停和恢复切换事件
         if self.player and self.player.pause_state:
-            self.__dict__["pauseButton"]["text"] = "暂停"
+            self.__dict__["startButton"]["text"] = "暂停"
+            self.__dict__["startButton"]["image"] = self.pause_img
             self.__dict__["musicProgressBar"].start()
             self.player.pause_state = False
         elif self.player and not self.player.pause_state:
-            self.__dict__["pauseButton"]["text"] = "恢复"
+            self.__dict__["startButton"]["text"] = "恢复"
+            self.__dict__["startButton"]["image"] = self.play_img
             self.__dict__["musicProgressBar"].stop()
             self.player.pause_state = True
 
@@ -274,6 +299,7 @@ class Window(ttk.Frame):
         old_music_path = self.__dict__["musicPath"].get()
         new_music_path = os.path.join(old_music_path[:old_music_path.rindex("/") + 1], new_music_name)
         self.__dict__["musicPath"].set(new_music_path)
+        self.init_control_button_img()
         self.music_start()
 
     # 根据行号设置音乐列表窗口的已选择行
