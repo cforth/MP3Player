@@ -65,13 +65,13 @@ class Window(ttk.Frame):
         # 初始化音乐播放器对象的引用
         self.player = None
         # 初始化按钮的图片
-        self.play_img = tk.PhotoImage(file="resources/play.png")
-        self.stop_img = tk.PhotoImage(file="resources/stop.png")
-        self.pause_img = tk.PhotoImage(file="resources/pause.png")
-        self.folder_img = tk.PhotoImage(file="resources/folder.png")
-        self.next_play_img = tk.PhotoImage(file="resources/next_play.png")
-        self.prev_play_img = tk.PhotoImage(file="resources/prev_play.png")
-        self.play_sound_img = tk.PhotoImage(file="resources/play_sound.png")
+        self.play_img = tk.PhotoImage(file="./resources/play.png")
+        self.stop_img = tk.PhotoImage(file="./resources/stop.png")
+        self.pause_img = tk.PhotoImage(file="./resources/pause.png")
+        self.folder_img = tk.PhotoImage(file="./resources/folder.png")
+        self.next_play_img = tk.PhotoImage(file="./resources/next_play.png")
+        self.prev_play_img = tk.PhotoImage(file="./resources/prev_play.png")
+        self.play_sound_img = tk.PhotoImage(file="./resources/play_sound.png")
         # 从json自动设置UI控件
         create_ui(self, ui_json)
         # 从json自动绑定事件
@@ -329,6 +329,6 @@ if __name__ == '__main__':
     # 设置窗口标题:
     app.master.title("音乐播放器")
     # 设置窗口图标
-    app.master.iconbitmap('resources/music.ico')
+    app.master.iconbitmap('./resources/music.ico')
     # 主消息循环:
     app.mainloop()
