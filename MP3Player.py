@@ -328,7 +328,11 @@ if __name__ == '__main__':
     app = Window("UI.json")
     # 设置窗口标题:
     app.master.title("音乐播放器")
-    # 设置窗口图标
-    app.master.iconbitmap('./resources/music.ico')
+    try:
+        # 设置窗口图标
+        app.master.iconbitmap('./resources/music.ico')
+    except Exception as e:
+        # 忽略图片设置的错误
+        pass
     # 主消息循环:
     app.mainloop()
