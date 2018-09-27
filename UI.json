@@ -4,7 +4,7 @@
     "int": {"width": 10},
     "string": {"text": "选择文件"},
     "command": "file_from_button_callback",
-    "grid": {"row":0, "column":0}
+    "grid": {"row":0, "column":0, "sticky":["W", "E"]}
   },
   "musicPathEntry": {
     "class": "Entry",
@@ -64,14 +64,14 @@
     "bind": {"<Button-1>": "prev_music"},
     "int": {"width": 10},
     "string": {"text": "前一首"},
-    "grid": {"row":4, "column":0}
+    "grid": {"row":4, "column":0, "sticky":["W", "E"]}
   },
     "nextMusicButton": {
     "class": "Button",
     "bind": {"<Button-1>": "next_music"},
     "int": {"width": 10},
     "string": {"text": "下一首"},
-    "grid": {"row":4, "column":2}
+    "grid": {"row":4, "column":2, "sticky":["W", "E"]}
   },
   "volumeLabel": {
     "class": "Label",
