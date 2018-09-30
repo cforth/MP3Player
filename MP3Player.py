@@ -84,6 +84,8 @@ class Window(ttk.Frame):
         self.init_music_list_window()
         # 初始化音乐播放列表
         self.music_play_list = []
+        # 保存当前正在播放的音乐地址
+        self.current_music_path = None
         # 初始化控制按钮图片属性
         self.init_control_button_img()
         # 设置其他按钮图片属性
@@ -114,21 +116,18 @@ class Window(ttk.Frame):
         self.master.bind("<Key>", self.key_event)
 
     def file_from_button_callback(self, event=None):
-        self.__dict__["musicPath"].set(filedialog.askopenfilename())
-        if self.__dict__["musicPath"].get():
-            # 在音乐播放列表中填充内容
-            self.set_music_list_window()
-        else:
+        music_path = filedialog.askopenfilename()
+        if music_path and os.path.exists(music_path):
             self.clear_music_list_window()
-        # 获取音乐文件夹路径
-        music_path = self.__dict__["musicPath"].get()
-        if os.path.exists(music_path):
+            self.current_music_path = music_path
+            self.__dict__["musicPath"].set(self.current_music_path)
             music_dir_path = music_path[:music_path.rindex("/") + 1]
             music_play_list = []
             for m in os.listdir(music_dir_path):
                 if m.endswith(".MP3") or m.endswith(".mp3"):
                     music_play_list.append(os.path.join(music_dir_path, m))
             self.music_play_list = music_play_list
+            self.insert_music_list(music_dir_path)
 
     def key_event(self, event=None):
         # 摁空格键暂停或恢复音乐播放
@@ -155,7 +154,7 @@ class Window(ttk.Frame):
 
     def music_start(self, event=None):
         # 设置正在播放的音乐信息
-        music_path = self.__dict__["musicPath"].get()
+        music_path = self.current_music_path
         # 如果不存在这个路径，则退出播放
         if not music_path or not os.path.exists(music_path):
             self.__dict__["musicPath"].set("")
@@ -182,32 +181,34 @@ class Window(ttk.Frame):
             self.music_pause_restore()
 
     def next_music(self, event=None):
-        self.init_control_button_img()
         if self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
         else:
-            old_music_path = self.__dict__["musicPath"].get()
+            old_music_path = self.current_music_path
             index = self.music_play_list.index(old_music_path)
             if not self.music_play_list or index == len(self.music_play_list) - 1:
                 return
             else:
+                self.init_control_button_img()
                 new_music_path = self.music_play_list[index + 1]
                 self.__dict__["musicPath"].set(new_music_path)
+                self.current_music_path = new_music_path
                 self.music_start()
                 self.set_music_list_window_selection(index + 1)
 
     def prev_music(self, event=None):
-        self.init_control_button_img()
         if self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
         else:
-            old_music_path = self.__dict__["musicPath"].get()
+            old_music_path = self.current_music_path
             index = self.music_play_list.index(old_music_path)
             if not self.music_play_list or index == 0:
                 return
             else:
+                self.init_control_button_img()
                 new_music_path = self.music_play_list[index - 1]
                 self.__dict__["musicPath"].set(new_music_path)
+                self.current_music_path = new_music_path
                 self.music_start()
                 self.set_music_list_window_selection(index - 1)
 
@@ -219,6 +220,8 @@ class Window(ttk.Frame):
         else:
             new_music_path = self.music_play_list[index]
             self.__dict__["musicPath"].set(new_music_path)
+            self.current_music_path = new_music_path
+            self.init_control_button_img()
             self.music_start()
             self.set_music_list_window_selection(index)
 
@@ -270,16 +273,6 @@ class Window(ttk.Frame):
         music_list.heading("a", text="序号")
         music_list.heading("b", text="音乐名称")
 
-    # 设置音乐播放列表
-    def set_music_list_window(self):
-        music_path = self.__dict__["musicPath"].get()
-        # 如果不存在这个路径，则退出播放
-        if not music_path or not os.path.exists(music_path):
-            self.__dict__["musicPath"].set("")
-            return
-        music_name = music_path[:music_path.rindex("/")]
-        self.insert_music_list(music_name)
-
     # 清空表格
     def clear_music_list_window(self):
         # 找到musicListTreeview控件的引用
@@ -291,7 +284,6 @@ class Window(ttk.Frame):
 
     # 表格内容插入
     def insert_music_list(self, dir_path):
-        self.clear_music_list_window()
         # 找到musicListTreeview控件的引用
         music_list = getattr(self, "musicListTreeview")
         # 获取音乐播放列表
@@ -308,6 +300,7 @@ class Window(ttk.Frame):
         old_music_path = self.__dict__["musicPath"].get()
         new_music_path = os.path.join(old_music_path[:old_music_path.rindex("/") + 1], new_music_name)
         self.__dict__["musicPath"].set(new_music_path)
+        self.current_music_path = new_music_path
         self.init_control_button_img()
         self.music_start()
 
@@ -336,3 +329,4 @@ if __name__ == '__main__':
         pass
     # 主消息循环:
     app.mainloop()
+
