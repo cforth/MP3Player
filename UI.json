@@ -73,17 +73,18 @@
     "string": {"text": "下一首"},
     "grid": {"row":4, "column":2, "sticky":["W", "E"]}
   },
-  "volumeLabel": {
-    "class": "Label",
+  "volumeOnOffButton": {
+    "class": "Button",
+    "bind": {"<Button-1>": "volume_on_off"},
     "int": {"width": 15},
-    "string": {"text": "音量调整 : "},
+    "string": {"text": "音量开"},
     "grid": {"row":4, "column":3, "sticky":["W", "E"]}
   },
   "musicVolumeScale": {
     "class": "Scale",
     "string": {"orient": "horizontal"},
     "int": {"from_": 0, "to": 100},
-    "bind": {"<ButtonRelease-1>": "set_music_volume"},
+    "bind": {"<ButtonRelease-1>": "set_music_scale_volume"},
     "grid": {"row":4, "column":4, "sticky":["W", "E"]}
   }
 }

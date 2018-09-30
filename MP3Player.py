@@ -71,7 +71,8 @@ class Window(ttk.Frame):
         self.folder_img = tk.PhotoImage(file="./resources/folder.png")
         self.next_play_img = tk.PhotoImage(file="./resources/next_play.png")
         self.prev_play_img = tk.PhotoImage(file="./resources/prev_play.png")
-        self.play_sound_img = tk.PhotoImage(file="./resources/play_sound.png")
+        self.volume_on_img = tk.PhotoImage(file="./resources/volume_on.png")
+        self.volume_off_img = tk.PhotoImage(file="./resources/volume_off.png")
         # 从json自动设置UI控件
         create_ui(self, ui_json)
         # 从json自动绑定事件
@@ -92,7 +93,7 @@ class Window(ttk.Frame):
         self.__dict__["fileFromButton"]["image"] = self.folder_img
         self.__dict__["prevMusicButton"]["image"] = self.prev_play_img
         self.__dict__["nextMusicButton"]["image"] = self.next_play_img
-        self.__dict__["volumeLabel"]["image"] = self.play_sound_img
+        self.__dict__["volumeOnOffButton"]["image"] = self.volume_on_img
         self.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
         self.master.columnconfigure(0, weight=1)
         self.master.rowconfigure(0, weight=1)
@@ -163,7 +164,10 @@ class Window(ttk.Frame):
         music_name = music_path[music_path.rindex("/") + 1:]
         self.__dict__["info"].set(music_name)
         # 中文路径必须编码后才可以
-        now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
+        if self.__dict__["volumeOnOffButton"]["text"] == "音量开":
+            now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
+        else:
+            now_volume = 0.0
 
         if self.__dict__["startButton"]["text"] == "播放":
             self.__dict__["startButton"]["image"] = self.pause_img
@@ -252,12 +256,27 @@ class Window(ttk.Frame):
             self.__dict__["musicProgressBar"].stop()
             self.player.pause_state = True
 
-    # 设置播放音乐的音量
-    def set_music_volume(self, event=None):
-        # 获取Player类需要的音量值，在0到1之间
-        now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
+    # 根据Scale条设置播放音乐的音量
+    def set_music_scale_volume(self, event=None):
+        if self.__dict__["volumeOnOffButton"]["text"] == "音量开":
+            # 获取Player类需要的音量值，在0到1之间
+            now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
+            self.set_volume(now_volume)
+
+    # 设置音乐的音量
+    def set_volume(self, volume):
         if self.player:
-            self.player.set_volume(now_volume)
+            self.player.set_volume(volume)
+
+    def volume_on_off(self, event=None):
+        if self.__dict__["volumeOnOffButton"]["text"] == "音量开":
+            self.__dict__["volumeOnOffButton"]["text"] = "音量关"
+            self.__dict__["volumeOnOffButton"]["image"] = self.volume_off_img
+            self.set_volume(0.0)
+        else:
+            self.__dict__["volumeOnOffButton"]["text"] = "音量开"
+            self.__dict__["volumeOnOffButton"]["image"] = self.volume_on_img
+            self.set_music_scale_volume()
 
     # 初始化音乐播放列表窗口
     def init_music_list_window(self):
