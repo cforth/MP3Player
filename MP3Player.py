@@ -117,17 +117,17 @@ class Window(ttk.Frame):
         self.master.bind("<Key>", self.key_event)
 
     def file_from_button_callback(self, event=None):
-        music_path = filedialog.askopenfilename()
-        if music_path and os.path.exists(music_path):
+        music_dir_path = filedialog.askdirectory()
+        if music_dir_path and os.path.exists(music_dir_path):
             self.clear_music_list_window()
-            self.current_music_path = music_path
-            self.__dict__["musicPath"].set(self.current_music_path)
-            music_dir_path = music_path[:music_path.rindex("/") + 1]
             music_play_list = []
             for m in os.listdir(music_dir_path):
                 if m.endswith(".MP3") or m.endswith(".mp3"):
-                    music_play_list.append(os.path.join(music_dir_path, m))
+                    music_play_list.append(os.path.join(music_dir_path, m).replace("\\", "/"))
             self.music_play_list = music_play_list
+            print(self.music_play_list)
+            self.current_music_path = self.music_play_list[0] if self.music_play_list else ""
+            self.__dict__["musicPath"].set(self.current_music_path)
             self.insert_music_list(music_dir_path)
 
     def key_event(self, event=None):
@@ -161,7 +161,7 @@ class Window(ttk.Frame):
             self.__dict__["musicPath"].set("")
             return
 
-        music_name = music_path[music_path.rindex("/") + 1:]
+        music_name = os.path.basename(music_path)
         self.__dict__["info"].set(music_name)
         # 中文路径必须编码后才可以
         if self.__dict__["volumeOnOffButton"]["text"] == "音量开":
@@ -317,7 +317,7 @@ class Window(ttk.Frame):
             return
         new_music_name = event.widget.item(event.widget.selection(), 'values')[1]
         old_music_path = self.__dict__["musicPath"].get()
-        new_music_path = os.path.join(old_music_path[:old_music_path.rindex("/") + 1], new_music_name)
+        new_music_path = os.path.join(os.path.dirname(old_music_path), new_music_name).replace("\\", "/")
         self.__dict__["musicPath"].set(new_music_path)
         self.current_music_path = new_music_path
         self.init_control_button_img()
