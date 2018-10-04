@@ -125,7 +125,6 @@ class Window(ttk.Frame):
                 if m.endswith(".MP3") or m.endswith(".mp3"):
                     music_play_list.append(os.path.join(music_dir_path, m).replace("\\", "/"))
             self.music_play_list = music_play_list
-            print(self.music_play_list)
             self.current_music_path = self.music_play_list[0] if self.music_play_list else ""
             self.__dict__["musicPath"].set(self.current_music_path)
             self.insert_music_list(music_dir_path)
@@ -309,7 +308,9 @@ class Window(ttk.Frame):
         music_name_list = [f for f in os.listdir(dir_path) if f.endswith(".MP3") or f.endswith(".mp3")]
         # 更新插入新节点
         for i in range(0, len(music_name_list)):
-            music_list.insert("", "end", values=(i + 1, music_name_list[i]))
+            tree_view_id = self.get_tree_view_iid(i)
+            # 根据iid插入到TreeView中
+            music_list.insert("", "end", iid=tree_view_id, values=(i + 1, music_name_list[i]))
 
     # 音乐列表双击事件处理
     def double_click_music_callback(self, event=None):
@@ -327,13 +328,17 @@ class Window(ttk.Frame):
     def set_music_list_window_selection(self, index):
         # 找到musicListTreeview控件的引用
         music_list_widget = getattr(self, "musicListTreeview")
-        music_list_widget_index = index + 1
-        hex_index = hex(music_list_widget_index)[2:].upper()
-        length = len(hex_index)
-        sel_index = "I000"[0:4 - length] + hex_index
+        sel_index = self.get_tree_view_iid(index)
         music_list_widget.selection_set((sel_index,))
         # 使选中的行可见
         music_list_widget.see((sel_index,))
+
+    # 根据list中的序号，计算出Treeview中的iid
+    def get_tree_view_iid(self, index):
+        widget_index = index + 1
+        hex_index = hex(widget_index)[2:].upper()
+        length = len(hex_index)
+        return "I000"[0:4 - length] + hex_index
 
 
 if __name__ == '__main__':
