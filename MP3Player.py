@@ -143,6 +143,7 @@ class Window(ttk.Frame):
             if configs:
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
+                self.set_music_list_window_selection(int(configs["music_list_window_selection"]))
 
     def save_config(self, config_path):
         if self.music_dir_path:
@@ -150,6 +151,7 @@ class Window(ttk.Frame):
             configs["music_dir_path"] = self.music_dir_path
             configs["current_music_path"] = self.current_music_path
             configs["playOption"] = self.__dict__["playOption"].get()
+            configs["music_list_window_selection"] = self.get_music_list_window_selection()
             with open(config_path, "w") as f:
                 json.dump(configs, f)
 
@@ -355,6 +357,14 @@ class Window(ttk.Frame):
         self.current_music_path = new_music_path
         self.init_control_button_img()
         self.music_start()
+
+    # 根据音乐列表窗口已选择行获得行号
+    def get_music_list_window_selection(self):
+        # 找到musicListTreeview控件的引用
+        music_list_widget = getattr(self, "musicListTreeview")
+        iid = music_list_widget.selection()[0] if music_list_widget.selection() else "I0001"
+        # 十六进制字符串转十进制数
+        return int(iid[1:], 16) - 1
 
     # 根据行号设置音乐列表窗口的已选择行
     def set_music_list_window_selection(self, index):
