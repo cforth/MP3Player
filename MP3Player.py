@@ -83,6 +83,8 @@ class Window(ttk.Frame):
         self.init_default_play_option()
         # 初始化音乐播放列表窗口
         self.init_music_list_window()
+        # 保存音乐播放的文件夹
+        self.music_dir_path = None
         # 初始化音乐播放列表
         self.music_play_list = []
         # 保存当前正在播放的音乐地址
@@ -99,6 +101,8 @@ class Window(ttk.Frame):
         self.master.rowconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(3, weight=1)
+        # 读取配置文件
+        self.read_config("./config.json")
 
     # 初始化音乐循环下拉列表，设置默认的音量值
     def init_default_play_option(self):
@@ -117,17 +121,8 @@ class Window(ttk.Frame):
         self.master.bind("<Key>", self.key_event)
 
     def file_from_button_callback(self, event=None):
-        music_dir_path = filedialog.askdirectory()
-        if music_dir_path and os.path.exists(music_dir_path):
-            self.clear_music_list_window()
-            music_play_list = []
-            for m in os.listdir(music_dir_path):
-                if m.endswith(".MP3") or m.endswith(".mp3"):
-                    music_play_list.append(os.path.join(music_dir_path, m).replace("\\", "/"))
-            self.music_play_list = music_play_list
-            self.current_music_path = self.music_play_list[0] if self.music_play_list else ""
-            self.__dict__["musicPath"].set(self.current_music_path)
-            self.insert_music_list(music_dir_path)
+        self.music_dir_path = filedialog.askdirectory()
+        self.init_music_list(self.music_dir_path)
 
     def key_event(self, event=None):
         # 摁空格键暂停或恢复音乐播放
@@ -140,9 +135,28 @@ class Window(ttk.Frame):
         elif event.keycode == 37:
             self.prev_music()
 
+    def read_config(self, config_path):
+        if not os.path.exists(config_path):
+            return
+        with open(config_path, "r") as f:
+            configs = json.load(f)
+            if configs:
+                self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
+                self.__dict__["playOption"].set(configs["playOption"])
+
+    def save_config(self, config_path):
+        if self.music_dir_path:
+            configs = dict()
+            configs["music_dir_path"] = self.music_dir_path
+            configs["current_music_path"] = self.current_music_path
+            configs["playOption"] = self.__dict__["playOption"].get()
+            with open(config_path, "w") as f:
+                json.dump(configs, f)
+
     # 在顶层窗口关闭时，先结束音乐播放线程
     def close_event(self, event=None):
         self.music_stop()
+        self.save_config("./config.json")
         self.master.destroy()
 
     def init_control_button_img(self, event=None):
@@ -299,6 +313,24 @@ class Window(ttk.Frame):
         for _ in map(music_list.delete, music_list.get_children("")):
             pass
         self.music_play_list = []
+
+    # 初始化音乐播放列表
+    def init_music_list(self, music_dir_path, current_music_path=None):
+        self.music_dir_path = music_dir_path
+        if music_dir_path and os.path.exists(music_dir_path):
+            self.clear_music_list_window()
+            music_play_list = []
+            for m in os.listdir(music_dir_path):
+                if m.endswith(".MP3") or m.endswith(".mp3"):
+                    music_play_list.append(os.path.join(music_dir_path, m).replace("\\", "/"))
+            self.music_play_list = music_play_list
+            if self.music_play_list:
+                if current_music_path and current_music_path in self.music_play_list:
+                    self.current_music_path = current_music_path
+                else:
+                    self.current_music_path = self.music_play_list[0]
+            self.__dict__["musicPath"].set(self.current_music_path)
+            self.insert_music_list(music_dir_path)
 
     # 表格内容插入
     def insert_music_list(self, dir_path):
