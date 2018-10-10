@@ -91,7 +91,7 @@ class Window(ttk.Frame):
         # 保存当前正在播放的音乐地址
         self.current_music_path = None
         # 保存收藏的音乐行号
-        self.star_music_indexs = []
+        self.star_music_index_set = set()
         # 初始化控制按钮图片属性
         self.init_control_button_img()
         # 设置其他按钮图片属性
@@ -108,9 +108,11 @@ class Window(ttk.Frame):
         self.read_config("./config.json")
 
     def init_menu(self):
-        # 输入框右键菜单
+        # 音乐列表窗口右键菜单
         self.muisc_list_menu = tk.Menu(self, tearoff=0)
-        self.muisc_list_menu.add_command(label="收藏", command=self.on_star_music)
+        self.muisc_list_menu.add_command(label="添加收藏", command=self.on_add_star_music)
+        self.muisc_list_menu.add_separator()
+        self.muisc_list_menu.add_command(label="取消收藏", command=self.on_del_star_music)
         music_list = getattr(self, "musicListTreeview")
         music_list.bind("<Button-3>", self.pop_menu)
 
@@ -157,12 +159,8 @@ class Window(ttk.Frame):
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
                 self.set_music_list_window_selection(int(configs["music_list_window_selection"]))
-                music_list_widget = getattr(self, "musicListTreeview")
-                children = music_list_widget.get_children()
-                for i in configs["star_music_indexs"]:
-                    music_list_widget.item(children[i], tags=["star"])
-                    self.star_music_indexs.append(i)
-                music_list_widget.tag_configure("star", foreground="red")
+                if configs.get("star_music_index_set") and configs["star_music_index_set"]:
+                    self.set_star_music(set(configs["star_music_index_set"]))
 
     def save_config(self, config_path):
         if self.music_dir_path:
@@ -171,7 +169,7 @@ class Window(ttk.Frame):
             configs["current_music_path"] = self.current_music_path
             configs["playOption"] = self.__dict__["playOption"].get()
             configs["music_list_window_selection"] = self.get_music_list_window_selection()
-            configs["star_music_indexs"] = self.star_music_indexs
+            configs["star_music_index_set"] = list(self.star_music_index_set)
             with open(config_path, "w") as f:
                 json.dump(configs, f)
 
@@ -364,7 +362,7 @@ class Window(ttk.Frame):
         for i in range(0, len(music_name_list)):
             tree_view_id = self.get_tree_view_iid(i)
             # 根据iid插入到TreeView中
-            music_list.insert("", "end", iid=tree_view_id, values=(i + 1, music_name_list[i]))
+            music_list.insert("", "end", iid=tree_view_id, values=(i + 1, music_name_list[i]), tags=["normal"])
 
     # 音乐列表双击事件处理
     def double_click_music_callback(self, event=None):
@@ -402,12 +400,32 @@ class Window(ttk.Frame):
         length = len(hex_index)
         return "I000"[0:4 - length] + hex_index
 
-    def on_star_music(self, event=None):
+    # 右键菜单添加收藏
+    def on_add_star_music(self, event=None):
         sel_index = self.get_music_list_window_selection()
+        self.star_music_index_set.add(sel_index)
         music_list_widget = getattr(self, "musicListTreeview")
         children = music_list_widget.get_children()
         music_list_widget.item(children[sel_index], tags=["star"])
-        self.star_music_indexs.append(sel_index)
+        music_list_widget.tag_configure("star", foreground="red")
+
+    # 右键菜单取消收藏
+    def on_del_star_music(self, event=None):
+        sel_index = self.get_music_list_window_selection()
+        if sel_index in self.star_music_index_set:
+            self.star_music_index_set.remove(sel_index)
+        music_list_widget = getattr(self, "musicListTreeview")
+        children = music_list_widget.get_children()
+        music_list_widget.item(children[sel_index], tags=["normal"])
+        music_list_widget.tag_configure("normal", foreground="black")
+
+    # 根据音乐行号列表将音乐播放列表中收藏歌曲标注
+    def set_star_music(self, star_music_index_set):
+        music_list_widget = getattr(self, "musicListTreeview")
+        children = music_list_widget.get_children()
+        for i in star_music_index_set:
+            music_list_widget.item(children[i], tags=["star"])
+            self.star_music_index_set.add(i)
         music_list_widget.tag_configure("star", foreground="red")
 
 
