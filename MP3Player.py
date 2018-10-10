@@ -83,12 +83,15 @@ class Window(ttk.Frame):
         self.init_default_play_option()
         # 初始化音乐播放列表窗口
         self.init_music_list_window()
+        self.init_menu()
         # 保存音乐播放的文件夹
         self.music_dir_path = None
         # 初始化音乐播放列表
         self.music_play_list = []
         # 保存当前正在播放的音乐地址
         self.current_music_path = None
+        # 保存收藏的音乐行号
+        self.star_music_indexs = []
         # 初始化控制按钮图片属性
         self.init_control_button_img()
         # 设置其他按钮图片属性
@@ -103,6 +106,16 @@ class Window(ttk.Frame):
         self.rowconfigure(3, weight=1)
         # 读取配置文件
         self.read_config("./config.json")
+
+    def init_menu(self):
+        # 输入框右键菜单
+        self.muisc_list_menu = tk.Menu(self, tearoff=0)
+        self.muisc_list_menu.add_command(label="收藏", command=self.on_star_music)
+        music_list = getattr(self, "musicListTreeview")
+        music_list.bind("<Button-3>", self.pop_menu)
+
+    def pop_menu(self, event):
+        self.muisc_list_menu.post(event.x_root, event.y_root)
 
     # 初始化音乐循环下拉列表，设置默认的音量值
     def init_default_play_option(self):
@@ -144,6 +157,12 @@ class Window(ttk.Frame):
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
                 self.set_music_list_window_selection(int(configs["music_list_window_selection"]))
+                music_list_widget = getattr(self, "musicListTreeview")
+                children = music_list_widget.get_children()
+                for i in configs["star_music_indexs"]:
+                    music_list_widget.item(children[i], tags=["star"])
+                    self.star_music_indexs.append(i)
+                music_list_widget.tag_configure("star", foreground="red")
 
     def save_config(self, config_path):
         if self.music_dir_path:
@@ -152,6 +171,7 @@ class Window(ttk.Frame):
             configs["current_music_path"] = self.current_music_path
             configs["playOption"] = self.__dict__["playOption"].get()
             configs["music_list_window_selection"] = self.get_music_list_window_selection()
+            configs["star_music_indexs"] = self.star_music_indexs
             with open(config_path, "w") as f:
                 json.dump(configs, f)
 
@@ -381,6 +401,14 @@ class Window(ttk.Frame):
         hex_index = hex(widget_index)[2:].upper()
         length = len(hex_index)
         return "I000"[0:4 - length] + hex_index
+
+    def on_star_music(self, event=None):
+        sel_index = self.get_music_list_window_selection()
+        music_list_widget = getattr(self, "musicListTreeview")
+        children = music_list_widget.get_children()
+        music_list_widget.item(children[sel_index], tags=["star"])
+        self.star_music_indexs.append(sel_index)
+        music_list_widget.tag_configure("star", foreground="red")
 
 
 if __name__ == '__main__':
