@@ -159,13 +159,16 @@ class Window(ttk.Frame):
             if configs:
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
-                self.set_music_list_window_selection(int(configs["music_list_window_selection"]))
-                if configs.get("star_music_index_list") and configs["star_music_index_list"]:
-                    self.set_star_music(configs["star_music_index_list"])
-                # 初始化收藏歌曲地址列表
-                if self.star_music_index_list:
-                    for i in self.star_music_index_list:
-                        self.star_music_path_list.append(self.music_play_list[i])
+                if configs["current_music_path"] in self.music_play_list:
+                    current_music_id = self.music_play_list.index(configs["current_music_path"])
+                    self.set_music_list_window_selection(current_music_id)
+                if configs.get("star_index_path_list") and configs["star_index_path_list"]:
+                    self.star_music_path_list = configs["star_index_path_list"]
+                    for x in self.star_music_path_list:
+                        if x in self.music_play_list:
+                            star_music_index = self.music_play_list.index(x)
+                            self.star_music_index_list.append(star_music_index)
+                    self.set_star_music(self.star_music_index_list)
 
     def save_config(self, config_path):
         if self.music_dir_path:
@@ -173,8 +176,11 @@ class Window(ttk.Frame):
             configs["music_dir_path"] = self.music_dir_path
             configs["current_music_path"] = self.current_music_path
             configs["playOption"] = self.__dict__["playOption"].get()
-            configs["music_list_window_selection"] = self.get_music_list_window_selection()
-            configs["star_music_index_list"] = sorted(self.star_music_index_list)
+            star_index_list = sorted(self.star_music_index_list)
+            star_index_path_list = []
+            for i in star_index_list:
+                star_index_path_list.append(self.music_play_list[i])
+            configs["star_index_path_list"] = star_index_path_list
             with open(config_path, "w") as f:
                 json.dump(configs, f)
 
@@ -358,6 +364,8 @@ class Window(ttk.Frame):
         for _ in map(music_list.delete, music_list.get_children("")):
             pass
         self.music_play_list = []
+        self.star_music_index_list = []
+        self.star_music_path_list = []
 
     # 初始化音乐播放列表
     def init_music_list(self, music_dir_path, current_music_path=None):
@@ -453,7 +461,6 @@ class Window(ttk.Frame):
         children = music_list_widget.get_children()
         for i in star_music_index_list:
             music_list_widget.item(children[i], tags=["star"])
-            self.star_music_index_list.append(i)
         music_list_widget.tag_configure("star", foreground="red")
 
 
