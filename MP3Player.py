@@ -91,7 +91,8 @@ class Window(ttk.Frame):
         # 保存当前正在播放的音乐地址
         self.current_music_path = None
         # 保存收藏的音乐行号
-        self.star_music_index_set = set()
+        self.star_music_index_list = []
+        self.star_music_path_list = []
         # 初始化控制按钮图片属性
         self.init_control_button_img()
         # 设置其他按钮图片属性
@@ -159,8 +160,12 @@ class Window(ttk.Frame):
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
                 self.set_music_list_window_selection(int(configs["music_list_window_selection"]))
-                if configs.get("star_music_index_set") and configs["star_music_index_set"]:
-                    self.set_star_music(set(configs["star_music_index_set"]))
+                if configs.get("star_music_index_list") and configs["star_music_index_list"]:
+                    self.set_star_music(configs["star_music_index_list"])
+                # 初始化收藏歌曲地址列表
+                if self.star_music_index_list:
+                    for i in self.star_music_index_list:
+                        self.star_music_path_list.append(self.music_play_list[i])
 
     def save_config(self, config_path):
         if self.music_dir_path:
@@ -169,7 +174,7 @@ class Window(ttk.Frame):
             configs["current_music_path"] = self.current_music_path
             configs["playOption"] = self.__dict__["playOption"].get()
             configs["music_list_window_selection"] = self.get_music_list_window_selection()
-            configs["star_music_index_set"] = list(self.star_music_index_set)
+            configs["star_music_index_list"] = sorted(self.star_music_index_list)
             with open(config_path, "w") as f:
                 json.dump(configs, f)
 
@@ -217,37 +222,55 @@ class Window(ttk.Frame):
         else:
             self.music_pause_restore()
 
+    def list_next_music_play(self, music_list):
+        old_music_path = self.current_music_path
+        if old_music_path not in music_list:
+            index = -1
+        else:
+            index = music_list.index(old_music_path)
+        if not music_list or index == len(music_list) - 1:
+            return
+        else:
+            self.init_control_button_img()
+            new_music_path = music_list[index + 1]
+            self.__dict__["musicPath"].set(new_music_path)
+            self.current_music_path = new_music_path
+            self.music_start()
+            sel_index = self.music_play_list.index(new_music_path)
+            self.set_music_list_window_selection(sel_index)
+
+    def list_prev_music_play(self, music_list):
+        old_music_path = self.current_music_path
+        if old_music_path not in music_list:
+            index = len(music_list)
+        else:
+            index = music_list.index(old_music_path)
+        if not music_list or index == 0:
+            return
+        else:
+            self.init_control_button_img()
+            new_music_path = music_list[index - 1]
+            self.__dict__["musicPath"].set(new_music_path)
+            self.current_music_path = new_music_path
+            self.music_start()
+            sel_index = self.music_play_list.index(new_music_path)
+            self.set_music_list_window_selection(sel_index)
+
     def next_music(self, event=None):
         if self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
-        else:
-            old_music_path = self.current_music_path
-            index = self.music_play_list.index(old_music_path)
-            if not self.music_play_list or index == len(self.music_play_list) - 1:
-                return
-            else:
-                self.init_control_button_img()
-                new_music_path = self.music_play_list[index + 1]
-                self.__dict__["musicPath"].set(new_music_path)
-                self.current_music_path = new_music_path
-                self.music_start()
-                self.set_music_list_window_selection(index + 1)
+        elif self.__dict__["playOption"].get() == "顺序播放":
+            self.list_next_music_play(self.music_play_list)
+        elif self.__dict__["playOption"].get() == "收藏播放":
+            self.list_next_music_play(self.star_music_path_list)
 
     def prev_music(self, event=None):
         if self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
-        else:
-            old_music_path = self.current_music_path
-            index = self.music_play_list.index(old_music_path)
-            if not self.music_play_list or index == 0:
-                return
-            else:
-                self.init_control_button_img()
-                new_music_path = self.music_play_list[index - 1]
-                self.__dict__["musicPath"].set(new_music_path)
-                self.current_music_path = new_music_path
-                self.music_start()
-                self.set_music_list_window_selection(index - 1)
+        elif self.__dict__["playOption"].get() == "顺序播放":
+            self.list_prev_music_play(self.music_play_list)
+        elif self.__dict__["playOption"].get() == "收藏播放":
+            self.list_prev_music_play(self.star_music_path_list)
 
     def random_music(self, event=None):
         music_play_list_length = len(self.music_play_list)
@@ -272,6 +295,8 @@ class Window(ttk.Frame):
     def could_music_stop(self, event=None):
         self.music_stop()
         if self.__dict__["playOption"].get() == "顺序播放":
+            self.next_music()
+        elif self.__dict__["playOption"].get() == "收藏播放":
             self.next_music()
         elif self.__dict__["playOption"].get() == "随机播放":
             self.random_music()
@@ -403,29 +428,32 @@ class Window(ttk.Frame):
     # 右键菜单添加收藏
     def on_add_star_music(self, event=None):
         sel_index = self.get_music_list_window_selection()
-        self.star_music_index_set.add(sel_index)
-        music_list_widget = getattr(self, "musicListTreeview")
-        children = music_list_widget.get_children()
-        music_list_widget.item(children[sel_index], tags=["star"])
-        music_list_widget.tag_configure("star", foreground="red")
+        if sel_index not in self.star_music_index_list:
+            self.star_music_index_list.append(sel_index)
+            self.star_music_path_list.append(self.music_play_list[sel_index])
+            music_list_widget = getattr(self, "musicListTreeview")
+            children = music_list_widget.get_children()
+            music_list_widget.item(children[sel_index], tags=["star"])
+            music_list_widget.tag_configure("star", foreground="red")
 
     # 右键菜单取消收藏
     def on_del_star_music(self, event=None):
         sel_index = self.get_music_list_window_selection()
-        if sel_index in self.star_music_index_set:
-            self.star_music_index_set.remove(sel_index)
-        music_list_widget = getattr(self, "musicListTreeview")
-        children = music_list_widget.get_children()
-        music_list_widget.item(children[sel_index], tags=["normal"])
-        music_list_widget.tag_configure("normal", foreground="black")
+        if sel_index in self.star_music_index_list:
+            self.star_music_index_list.remove(sel_index)
+            self.star_music_path_list.remove(self.music_play_list[sel_index])
+            music_list_widget = getattr(self, "musicListTreeview")
+            children = music_list_widget.get_children()
+            music_list_widget.item(children[sel_index], tags=["normal"])
+            music_list_widget.tag_configure("normal", foreground="black")
 
     # 根据音乐行号列表将音乐播放列表中收藏歌曲标注
-    def set_star_music(self, star_music_index_set):
+    def set_star_music(self, star_music_index_list):
         music_list_widget = getattr(self, "musicListTreeview")
         children = music_list_widget.get_children()
-        for i in star_music_index_set:
+        for i in star_music_index_list:
             music_list_widget.item(children[i], tags=["star"])
-            self.star_music_index_set.add(i)
+            self.star_music_index_list.append(i)
         music_list_widget.tag_configure("star", foreground="red")
 
 
