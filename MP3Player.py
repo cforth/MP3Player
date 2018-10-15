@@ -262,34 +262,39 @@ class Window(ttk.Frame):
             sel_index = self.music_play_list.index(new_music_path)
             self.set_music_list_window_selection(sel_index)
 
-    def next_music(self, event=None):
-        if self.__dict__["playOption"].get() == "随机播放":
-            self.random_music()
-        elif self.__dict__["playOption"].get() == "顺序播放":
-            self.list_next_music_play(self.music_play_list)
-        elif self.__dict__["playOption"].get() == "收藏播放":
-            self.list_next_music_play(self.star_music_path_list)
-
-    def prev_music(self, event=None):
-        if self.__dict__["playOption"].get() == "随机播放":
-            self.random_music()
-        elif self.__dict__["playOption"].get() == "顺序播放":
-            self.list_prev_music_play(self.music_play_list)
-        elif self.__dict__["playOption"].get() == "收藏播放":
-            self.list_prev_music_play(self.star_music_path_list)
-
-    def random_music(self, event=None):
-        music_play_list_length = len(self.music_play_list)
-        index = random.randint(0, music_play_list_length)
-        if not self.music_play_list:
+    def list_random_music_play(self, music_list):
+        if not music_list:
             return
         else:
-            new_music_path = self.music_play_list[index]
+            music_play_list_length = len(music_list)
+            index = random.randint(0, music_play_list_length - 1)
+            new_music_path = music_list[index]
             self.__dict__["musicPath"].set(new_music_path)
             self.current_music_path = new_music_path
             self.init_control_button_img()
             self.music_start()
-            self.set_music_list_window_selection(index)
+            sel_index = self.music_play_list.index(new_music_path)
+            self.set_music_list_window_selection(sel_index)
+
+    def next_music(self, event=None):
+        if self.__dict__["playOption"].get() == "随机播放":
+            self.list_random_music_play(self.music_play_list)
+        elif self.__dict__["playOption"].get() == "顺序播放":
+            self.list_next_music_play(self.music_play_list)
+        elif self.__dict__["playOption"].get() == "收藏播放":
+            self.list_next_music_play(self.star_music_path_list)
+        elif self.__dict__["playOption"].get() == "收藏随机":
+            self.list_random_music_play(self.star_music_path_list)
+
+    def prev_music(self, event=None):
+        if self.__dict__["playOption"].get() == "随机播放":
+            self.list_random_music_play(self.music_play_list)
+        elif self.__dict__["playOption"].get() == "顺序播放":
+            self.list_prev_music_play(self.music_play_list)
+        elif self.__dict__["playOption"].get() == "收藏播放":
+            self.list_prev_music_play(self.star_music_path_list)
+        elif self.__dict__["playOption"].get() == "收藏随机":
+            self.list_random_music_play(self.star_music_path_list)
 
     def music_stop(self, event=None):
         self.init_control_button_img()
@@ -300,12 +305,7 @@ class Window(ttk.Frame):
 
     def could_music_stop(self, event=None):
         self.music_stop()
-        if self.__dict__["playOption"].get() == "顺序播放":
-            self.next_music()
-        elif self.__dict__["playOption"].get() == "收藏播放":
-            self.next_music()
-        elif self.__dict__["playOption"].get() == "随机播放":
-            self.random_music()
+        self.next_music()
 
     def music_pause_restore(self, event=None):
         # 暂停和恢复切换事件
