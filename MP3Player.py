@@ -281,7 +281,7 @@ class Window(ttk.Frame):
             self.list_random_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "顺序播放":
             self.list_next_music_play(self.music_play_list)
-        elif self.__dict__["playOption"].get() == "收藏播放":
+        elif self.__dict__["playOption"].get() == "收藏顺序":
             self.list_next_music_play(self.star_music_path_list)
         elif self.__dict__["playOption"].get() == "收藏随机":
             self.list_random_music_play(self.star_music_path_list)
@@ -291,7 +291,7 @@ class Window(ttk.Frame):
             self.list_random_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "顺序播放":
             self.list_prev_music_play(self.music_play_list)
-        elif self.__dict__["playOption"].get() == "收藏播放":
+        elif self.__dict__["playOption"].get() == "收藏顺序":
             self.list_prev_music_play(self.star_music_path_list)
         elif self.__dict__["playOption"].get() == "收藏随机":
             self.list_random_music_play(self.star_music_path_list)
