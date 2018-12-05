@@ -4,6 +4,7 @@ import pygame
 import os
 import random
 import tkinter.filedialog as filedialog
+import tkinter.messagebox as messagebox
 from json2gui import *
 
 
@@ -186,9 +187,11 @@ class Window(ttk.Frame):
 
     # 在顶层窗口关闭时，先结束音乐播放线程
     def close_event(self, event=None):
-        self.music_stop()
-        self.save_config("./config.json")
-        self.master.destroy()
+        quit_result = messagebox.askokcancel('提示', '真的要退出吗？')
+        if quit_result:
+            self.music_stop()
+            self.save_config("./config.json")
+            self.master.destroy()
 
     def init_control_button_img(self, event=None):
         # 设置按钮的图片和文字属性
