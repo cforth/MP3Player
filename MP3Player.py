@@ -5,6 +5,8 @@ import threading
 import pygame
 import os
 import random
+import eyed3
+from eyed3 import mp3
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 from json2gui import *
@@ -100,6 +102,12 @@ class Window(ttk.Frame):
         self.init_control_button_img()
         # 初始化音乐播放时间
         self.__dict__["playTime"].set("00:00")
+        self.__dict__["musicTime"].set("00:00")
+        # 初始化音乐播放时间戳
+        self._play_current_time = datetime.datetime.now()
+        # 音乐播放时间定时器
+        self._play_time_count_timer = None
+        self._player_running = False
         # 设置其他按钮图片属性
         self.__dict__["fileFromButton"]["image"] = self.folder_img
         self.__dict__["prevMusicButton"]["image"] = self.prev_play_img
@@ -215,31 +223,36 @@ class Window(ttk.Frame):
     # 更新内部的定时器
     def _update_timer(self):
         current_time = datetime.datetime.now()
-        secs = (current_time - self.play_current_time).seconds
+        secs = (current_time - self._play_current_time).seconds
         self.__dict__["playTime"].set(self._format_time(secs))
-        self.play_time_count_timer = self.after(1000, self._update_timer)
+        if self._player_running:
+            self._play_time_count_timer = self.after(1000, self._update_timer)
 
     # 启动计时器
     def play_time_count_start(self, event=None):
-        self.play_current_time = datetime.datetime.now()
-        self.play_time = 0
-        self.__dict__["playTime"].set(self._format_time(self.play_time))
+        self._play_current_time = datetime.datetime.now()
+        self.__dict__["playTime"].set(self._format_time(0))
+        self._player_running = True
         # 设置定时器，更新播放时长
-        self.play_time_count_timer = self.after(1000, self._update_timer)
+        self._play_time_count_timer = self.after(1000, self._update_timer)
 
     # 停止计时器
     def play_time_count_stop(self, event=None):
-        self.after_cancel(self.play_time_count_timer)
+        self._player_running = False
+        self.after_cancel(self._play_time_count_timer)
+        self._play_time_count_timer = None
 
     # 暂停计时器
     def play_time_count_pause(self, event=None):
-        self.after_cancel(self.play_time_count_timer)
+        self._player_running = False
+        self.after_cancel(self._play_time_count_timer)
         self.play_pause_time = datetime.datetime.now()
 
     # 恢复计时器
     def play_time_count_restore(self, event=None):
-        self.play_current_time += datetime.datetime.now() - self.play_pause_time
-        self.play_time_count_timer = self.after(1000, self._update_timer)
+        self._player_running = True
+        self._play_current_time += datetime.datetime.now() - self.play_pause_time
+        self._play_time_count_timer = self.after(1000, self._update_timer)
 
     # 播放音乐
     def music_start(self, event=None):
@@ -252,6 +265,10 @@ class Window(ttk.Frame):
 
         music_name = os.path.basename(music_path)
         self.__dict__["info"].set(music_name)
+        # 设置音乐时长
+        music_file = mp3.Mp3AudioFile(music_path)
+        music_time = music_file.info.time_secs
+        self.__dict__["musicTime"].set(self._format_time(music_time))
         # 中文路径必须编码后才可以
         if self.__dict__["volumeOnOffButton"]["text"] == "音量开":
             now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
@@ -347,8 +364,8 @@ class Window(ttk.Frame):
     def music_stop(self, event=None):
         self.init_control_button_img()
         self.__dict__["musicProgressBar"].stop()
-        self.play_time_count_stop()
         if self.player:
+            self.play_time_count_stop()
             self.player.stop_state = True
             self.player = None
 

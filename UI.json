@@ -52,6 +52,11 @@
     "int": {"value": 0},
     "grid": {"row":2, "column":1, "columnspan": 3, "sticky":["W", "E"]}
   },
+  "musicTimeLabel": {
+    "class": "Label",
+    "var": "musicTime",
+    "grid": {"row":2, "column":4, "sticky":["W", "E"]}
+  },
   "musicListTreeview": {
     "class": "Treeview",
     "bind": {"<Double-1>": "double_click_music_callback"},
