@@ -280,7 +280,9 @@ class Window(ttk.Frame):
             self.set_music_list_window_selection(sel_index)
 
     def next_music(self, event=None):
-        if self.__dict__["playOption"].get() == "随机播放":
+        if self.__dict__["playOption"].get() == "单曲播放":
+            self.music_start()
+        elif self.__dict__["playOption"].get() == "随机播放":
             self.list_random_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "顺序播放":
             self.list_next_music_play(self.music_play_list)
