@@ -102,6 +102,8 @@ class Window(ttk.Frame):
         self.init_control_button_img()
         # 初始化音乐播放时间
         self.__dict__["playTime"].set("00:00")
+        # 初始化音乐时长
+        self.music_duration = 0
         self.__dict__["musicTime"].set("00:00")
         # 初始化音乐播放时间戳
         self._play_current_time = datetime.datetime.now()
@@ -223,10 +225,14 @@ class Window(ttk.Frame):
     # 更新内部的定时器
     def _update_timer(self):
         current_time = datetime.datetime.now()
-        secs = (current_time - self._play_current_time).seconds
+        time_obj = current_time - self._play_current_time
+        secs = time_obj.seconds
+        # 更新进度条
+        millisecond = secs * 1000 + time_obj.microseconds/1000
+        self.__dict__["progressBarValue"].set(millisecond/(self.music_duration*10))
         self.__dict__["playTime"].set(self._format_time(secs))
         if self._player_running:
-            self._play_time_count_timer = self.after(1000, self._update_timer)
+            self._play_time_count_timer = self.after(500, self._update_timer)
 
     # 启动计时器
     def play_time_count_start(self, event=None):
@@ -234,18 +240,23 @@ class Window(ttk.Frame):
         self.__dict__["playTime"].set(self._format_time(0))
         self._player_running = True
         # 设置定时器，更新播放时长
-        self._play_time_count_timer = self.after(1000, self._update_timer)
+        self._play_time_count_timer = self.after(500, self._update_timer)
 
     # 停止计时器
     def play_time_count_stop(self, event=None):
+        # 停止进度条
+        self.__dict__["progressBarValue"].set(0.0)
+        self.__dict__["playTime"].set(self._format_time(0))
         self._player_running = False
-        self.after_cancel(self._play_time_count_timer)
+        if self._play_time_count_timer:
+            self.after_cancel(self._play_time_count_timer)
         self._play_time_count_timer = None
 
     # 暂停计时器
     def play_time_count_pause(self, event=None):
         self._player_running = False
-        self.after_cancel(self._play_time_count_timer)
+        if self._play_time_count_timer:
+            self.after_cancel(self._play_time_count_timer)
         self.play_pause_time = datetime.datetime.now()
 
     # 恢复计时器
@@ -267,8 +278,8 @@ class Window(ttk.Frame):
         self.__dict__["info"].set(music_name)
         # 设置音乐时长
         music_file = mp3.Mp3AudioFile(music_path)
-        music_time = music_file.info.time_secs
-        self.__dict__["musicTime"].set(self._format_time(music_time))
+        self.music_duration = music_file.info.time_secs
+        self.__dict__["musicTime"].set(self._format_time(self.music_duration))
         # 中文路径必须编码后才可以
         if self.__dict__["volumeOnOffButton"]["text"] == "音量开":
             now_volume = self.__dict__["musicVolumeScale"].get() / 100.0
@@ -278,14 +289,12 @@ class Window(ttk.Frame):
         if self.__dict__["startButton"]["text"] == "播放":
             self.__dict__["startButton"]["image"] = self.pause_img
             self.__dict__["startButton"]["text"] = "暂停"
-            self.__dict__["musicProgressBar"].stop()
+            self.play_time_count_stop()
             if self.player:
                 self.player.stop_state = True
                 self.player = None
                 time.sleep(1)
             self.player = Player(self.__dict__["musicPath"].get().encode('utf-8'), now_volume, self)
-            # 启动进度条
-            self.__dict__["musicProgressBar"].start()
             self.player.start()
             self.play_time_count_start()
         else:
@@ -363,7 +372,6 @@ class Window(ttk.Frame):
 
     def music_stop(self, event=None):
         self.init_control_button_img()
-        self.__dict__["musicProgressBar"].stop()
         if self.player:
             self.play_time_count_stop()
             self.player.stop_state = True
@@ -378,13 +386,11 @@ class Window(ttk.Frame):
         if self.player and self.player.pause_state:
             self.__dict__["startButton"]["text"] = "暂停"
             self.__dict__["startButton"]["image"] = self.pause_img
-            self.__dict__["musicProgressBar"].start()
             self.play_time_count_restore()
             self.player.pause_state = False
         elif self.player and not self.player.pause_state:
             self.__dict__["startButton"]["text"] = "恢复"
             self.__dict__["startButton"]["image"] = self.play_img
-            self.__dict__["musicProgressBar"].stop()
             self.play_time_count_pause()
             self.player.pause_state = True
 
