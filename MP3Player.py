@@ -426,9 +426,11 @@ class Window(ttk.Frame):
         music_list.configure(yscrollcommand=music_list_vbar.set)
         # 表格的标题
         music_list.column("a", width=50, anchor="center")
-        music_list.column("b", width=700, anchor="w")
+        music_list.column("b", width=650, anchor="w")
+        music_list.column("c", width=50, anchor="center")
         music_list.heading("a", text="序号")
         music_list.heading("b", text="音乐名称")
+        music_list.heading("c", text="收藏")
 
     # 清空表格
     def clear_music_list_window(self):
@@ -516,7 +518,7 @@ class Window(ttk.Frame):
             music_list_widget = getattr(self, "musicListTreeview")
             children = music_list_widget.get_children()
             music_list_widget.item(children[sel_index], tags=["star"])
-            music_list_widget.tag_configure("star", foreground="red")
+            music_list_widget.set(children[sel_index], column=2, value="★")
 
     # 右键菜单取消收藏
     def on_del_star_music(self, event=None):
@@ -527,7 +529,7 @@ class Window(ttk.Frame):
             music_list_widget = getattr(self, "musicListTreeview")
             children = music_list_widget.get_children()
             music_list_widget.item(children[sel_index], tags=["normal"])
-            music_list_widget.tag_configure("normal", foreground="black")
+            music_list_widget.set(children[sel_index], column=2, value="")
 
     # 根据音乐行号列表将音乐播放列表中收藏歌曲标注
     def set_star_music(self, star_music_index_list):
@@ -535,7 +537,7 @@ class Window(ttk.Frame):
         children = music_list_widget.get_children()
         for i in star_music_index_list:
             music_list_widget.item(children[i], tags=["star"])
-        music_list_widget.tag_configure("star", foreground="red")
+            music_list_widget.set(children[i], column=2, value="★")
 
 
 if __name__ == '__main__':
