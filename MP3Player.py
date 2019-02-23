@@ -276,7 +276,12 @@ class Window(ttk.Frame):
 
         # 设置音乐时长
         music_file = mp3.Mp3AudioFile(music_path)
-        self.__dict__["info"].set(music_file.tag.artist + " - " + music_file.tag.title + " 专辑:" + music_file.tag.album)
+        try:
+            music_name_info = music_file.tag.artist + " - " + music_file.tag.title + "\n专辑:" + music_file.tag.album
+        except Exception as e:
+            logging.warning(e)
+            music_name_info = os.path.basename(music_path)
+        self.__dict__["info"].set(music_name_info)
         self.music_duration = music_file.info.time_secs
         self.__dict__["musicTime"].set(self._format_time(self.music_duration))
         # 中文路径必须编码后才可以
