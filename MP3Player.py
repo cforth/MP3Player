@@ -14,11 +14,13 @@ from json2gui import *
 
 # 音乐播放器类，使用pygame实现
 class Player(threading.Thread):
-    def __init__(self, file_path, volume=1.0, master=None):
+    def __init__(self, file_path, volume=1.0, start_time=0.0, master=None):
         threading.Thread.__init__(self)
         # 传入主窗口的指针，用于触发主窗口事件(若有)
         self.master = master
         self.file_path = file_path
+        # 音乐播放起点
+        self.start_time = start_time
         # 用于控制音乐播放与停止
         self.stop_state = False
         # 用于控制音乐的暂停和恢复
@@ -41,7 +43,7 @@ class Player(threading.Thread):
             file = self.file_path
             self.track.load(file)  # 载入音乐文件
             self.track.set_volume(self.volume)  # 设置音量
-            self.track.play()  # 开始播放
+            self.track.play(start=self.start_time)  # 开始播放
         except Exception as e:
             logging.warning(e)
             if self.master:
@@ -105,6 +107,8 @@ class Window(ttk.Frame):
         # 初始化音乐时长
         self.music_duration = 0
         self.__dict__["musicTime"].set("00:00")
+        # 初始化音乐播放开始时间
+        self.start_seconds = 0.0
         # 初始化音乐播放时间戳
         self._play_current_time = datetime.datetime.now()
         # 音乐播放时间定时器
@@ -222,31 +226,47 @@ class Window(ttk.Frame):
             mins = divmod(all_time, min)
             return "%.2d:%.2d" % (int(mins[0]), math.ceil(mins[1]))
 
+    def _de_format_time(self, time_str):
+        mins = int(time_str[:time_str.index(":")])
+        secs = int(time_str[time_str.index(":")+1:])
+        return mins * 60 + secs
+
     # 更新内部的定时器
     def _update_timer(self):
         current_time = datetime.datetime.now()
         time_obj = current_time - self._play_current_time
-        secs = time_obj.seconds
+        secs = time_obj.seconds + self.start_seconds
         # 更新进度条
         millisecond = secs * 1000 + time_obj.microseconds/1000
-        self.__dict__["progressBarValue"].set(millisecond/(self.music_duration*10))
+        self.__dict__["music_progress_scale_value"].set(millisecond/(self.music_duration*10))
         self.__dict__["playTime"].set(self._format_time(secs))
         if self._player_running:
-            self._play_time_count_timer = self.after(500, self._update_timer)
+            self._play_time_count_timer = self.after(1000, self._update_timer)
 
     # 启动计时器
-    def play_time_count_start(self, event=None):
+    def play_time_count_start(self, event=None, start_seconds=0.0):
+        self.start_seconds = start_seconds
         self._play_current_time = datetime.datetime.now()
-        self.__dict__["playTime"].set(self._format_time(0))
+        self.__dict__["playTime"].set(self._format_time(self.start_seconds))
         self._player_running = True
         # 设置定时器，更新播放时长
-        self._play_time_count_timer = self.after(500, self._update_timer)
+        self._play_time_count_timer = self.after(1000, self._update_timer)
 
     # 停止计时器
     def play_time_count_stop(self, event=None):
         # 停止进度条
-        self.__dict__["progressBarValue"].set(0.0)
+        self.start_seconds = 0.0
+        self.__dict__["music_progress_scale_value"].set(0.0)
         self.__dict__["playTime"].set(self._format_time(0))
+        self._player_running = False
+        if self._play_time_count_timer:
+            self.after_cancel(self._play_time_count_timer)
+        self._play_time_count_timer = None
+
+    # 调整进度条时停止计时器
+    def adjust_time_count_stop(self, event=None):
+        # 停止进度条
+        self.start_seconds = 0.0
         self._player_running = False
         if self._play_time_count_timer:
             self.after_cancel(self._play_time_count_timer)
@@ -265,8 +285,14 @@ class Window(ttk.Frame):
         self._play_current_time += datetime.datetime.now() - self.play_pause_time
         self._play_time_count_timer = self.after(1000, self._update_timer)
 
+    # 设置音乐从指定进度点播放
+    def set_music_progress(self, event=None):
+        music_progress_value = self.__dict__["music_progress_scale_value"].get()
+        music_play_start_time = music_progress_value * self.music_duration / 100
+        self.music_start(start_seconds=music_play_start_time)
+
     # 播放音乐
-    def music_start(self, event=None):
+    def music_start(self, event=None, start_seconds=0.0):
         # 设置正在播放的音乐信息
         music_path = self.current_music_path
         # 如果不存在这个路径，则退出播放
@@ -290,17 +316,21 @@ class Window(ttk.Frame):
         else:
             now_volume = 0.0
 
-        if self.__dict__["startButton"]["text"] == "播放":
+        # 如果是新播放音乐或者从指定时间播放
+        if self.__dict__["startButton"]["text"] == "播放" or start_seconds != 0.0:
             self.__dict__["startButton"]["image"] = self.pause_img
             self.__dict__["startButton"]["text"] = "暂停"
-            self.play_time_count_stop()
+            if start_seconds != 0.0:
+                self.adjust_time_count_stop()
+            else:
+                self.play_time_count_stop()
             if self.player:
                 self.player.stop_state = True
                 self.player = None
                 time.sleep(1)
-            self.player = Player(self.__dict__["musicPath"].get().encode('utf-8'), now_volume, self)
+            self.player = Player(self.__dict__["musicPath"].get().encode('utf-8'), now_volume, start_seconds, self)
             self.player.start()
-            self.play_time_count_start()
+            self.play_time_count_start(start_seconds=start_seconds)
         else:
             self.music_pause_restore()
 
