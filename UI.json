@@ -51,7 +51,9 @@
     "string": {"orient": "horizontal"},
     "int": {"from_": 0, "to": 100},
     "var": "music_progress_scale_value",
-    "bind": {"<ButtonRelease-1>": "set_music_progress", "<B1-Motion>": "play_time_count_pause"},
+    "bind": {"<ButtonRelease-1>": "set_music_progress",
+             "<Button-1>": "play_time_count_pause",
+             "<B1-Motion>": "set_music_start_time"},
     "grid": {"row":2, "column":1, "columnspan": 3,"sticky":["W", "E"]}
   },
   "musicTimeLabel": {

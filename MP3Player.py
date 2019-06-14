@@ -285,10 +285,16 @@ class Window(ttk.Frame):
         self._play_current_time += datetime.datetime.now() - self.play_pause_time
         self._play_time_count_timer = self.after(1000, self._update_timer)
 
-    # 设置音乐从指定进度点播放
-    def set_music_progress(self, event=None):
+    # 根据进度条拖动的位置，修改音乐正在播放的时间
+    def set_music_start_time(self, event=None):
         music_progress_value = self.__dict__["music_progress_scale_value"].get()
         music_play_start_time = music_progress_value * self.music_duration / 100
+        self.__dict__["playTime"].set(self._format_time(music_play_start_time))
+        return music_play_start_time
+
+    # 设置音乐从指定进度点播放
+    def set_music_progress(self, event=None):
+        music_play_start_time = self.set_music_start_time()
         self.music_start(start_seconds=music_play_start_time)
 
     # 播放音乐
