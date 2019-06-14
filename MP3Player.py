@@ -6,10 +6,18 @@ import pygame
 import os
 import random
 import eyed3
+import hashlib
 from eyed3 import mp3
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 from json2gui import *
+
+
+# 字符串MD5生成
+def get_str_md5(string):
+    my_hash = hashlib.md5()
+    my_hash.update(string.encode('utf-8'))
+    return my_hash.hexdigest()
 
 
 # 音乐播放器类，使用pygame实现
@@ -125,7 +133,7 @@ class Window(ttk.Frame):
         self.columnconfigure(1, weight=1)
         self.rowconfigure(3, weight=1)
         # 读取配置文件
-        self.read_config("./config.json")
+        self.read_config("./configs/config.json")
 
     def init_menu(self):
         # 音乐列表窗口右键菜单
@@ -156,8 +164,10 @@ class Window(ttk.Frame):
         self.master.bind("<Key>", self.key_event)
 
     def file_from_button_callback(self, event=None):
+        self.save_config("./configs/config.json")
         self.music_dir_path = filedialog.askdirectory()
         self.init_music_list(self.music_dir_path)
+        self.read_star_config(self.music_dir_path)
 
     def key_event(self, event=None):
         # 摁空格键暂停或恢复音乐播放
@@ -170,6 +180,21 @@ class Window(ttk.Frame):
         elif event.keycode == 37:
             self.prev_music()
 
+    def read_star_config(self, music_dir_path):
+        # 读取音乐文件夹的收藏列表
+        current_music_dir = music_dir_path
+        star_music_config_path = os.path.join('./configs', get_str_md5(current_music_dir) + ".json")
+        if os.path.exists(star_music_config_path):
+            with open(star_music_config_path, "r") as sf:
+                star_configs = json.load(sf)
+                if star_configs.get("star_index_path_list") and star_configs["star_index_path_list"]:
+                    self.star_music_path_list = star_configs["star_index_path_list"]
+                    for x in self.star_music_path_list:
+                        if x in self.music_play_list:
+                            star_music_index = self.music_play_list.index(x)
+                            self.star_music_index_list.append(star_music_index)
+                    self.set_star_music(self.star_music_index_list)
+
     def read_config(self, config_path):
         if not os.path.exists(config_path):
             return
@@ -181,13 +206,7 @@ class Window(ttk.Frame):
                 if configs["current_music_path"] in self.music_play_list:
                     current_music_id = self.music_play_list.index(configs["current_music_path"])
                     self.set_music_list_window_selection(current_music_id)
-                if configs.get("star_index_path_list") and configs["star_index_path_list"]:
-                    self.star_music_path_list = configs["star_index_path_list"]
-                    for x in self.star_music_path_list:
-                        if x in self.music_play_list:
-                            star_music_index = self.music_play_list.index(x)
-                            self.star_music_index_list.append(star_music_index)
-                    self.set_star_music(self.star_music_index_list)
+                    self.read_star_config(configs["music_dir_path"])
 
     def save_config(self, config_path):
         if self.music_dir_path:
@@ -199,7 +218,11 @@ class Window(ttk.Frame):
             star_index_path_list = []
             for i in star_index_list:
                 star_index_path_list.append(self.music_play_list[i])
-            configs["star_index_path_list"] = star_index_path_list
+            star_configs = dict()
+            star_configs["star_index_path_list"] = star_index_path_list
+            star_music_config_path = os.path.join('./configs', get_str_md5(self.music_dir_path) + ".json")
+            with open(star_music_config_path, "w") as f:
+                json.dump(star_configs, f)
             with open(config_path, "w") as f:
                 json.dump(configs, f)
 
@@ -208,7 +231,7 @@ class Window(ttk.Frame):
         quit_result = messagebox.askokcancel('提示', '真的要退出吗？')
         if quit_result:
             self.music_stop()
-            self.save_config("./config.json")
+            self.save_config("./configs/config.json")
             self.master.destroy()
 
     def init_control_button_img(self, event=None):
