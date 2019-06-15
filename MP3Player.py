@@ -209,6 +209,9 @@ class Window(ttk.Frame):
                     self.read_star_config(configs["music_dir_path"])
 
     def save_config(self, config_path):
+        if not os.path.exists("./configs"):
+            os.mkdir("./configs")
+
         if self.music_dir_path:
             configs = dict()
             configs["music_dir_path"] = self.music_dir_path
