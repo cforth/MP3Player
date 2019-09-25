@@ -134,6 +134,8 @@ class Window(ttk.Frame):
         self.rowconfigure(3, weight=1)
         # 读取配置文件
         self.read_config("./configs/config.json")
+        # 记录播放过的音乐行号
+        self.music_play_history_ids = []
 
     def init_menu(self):
         # 音乐列表窗口右键菜单
@@ -162,6 +164,8 @@ class Window(ttk.Frame):
         self.master.protocol("WM_DELETE_WINDOW", self.close_event)
         # 绑定键盘事件
         self.master.bind("<Key>", self.key_event)
+        # 绑定选择播放顺序控件的事件
+        self.__dict__["playOptionCombobox"].bind("<Button-1>", self.clear_music_play_history)
 
     def file_from_button_callback(self, event=None):
         self.save_config("./configs/config.json")
@@ -400,7 +404,7 @@ class Window(ttk.Frame):
             sel_index = self.music_play_list.index(new_music_path)
             self.set_music_list_window_selection(sel_index)
 
-    def list_random_music_play(self, music_list):
+    def list_next_random_music_play(self, music_list):
         if not music_list:
             return
         else:
@@ -413,28 +417,54 @@ class Window(ttk.Frame):
             self.music_start()
             sel_index = self.music_play_list.index(new_music_path)
             self.set_music_list_window_selection(sel_index)
+            # 记录随机播放过的音乐行号
+            self.music_play_history_ids.append(index)
+
+    def list_prev_random_music_play(self, music_list):
+        if not music_list or not self.music_play_history_ids:
+            return
+        else:
+            if self.current_music_path not in music_list:
+                return
+            else:
+                old_index = music_list.index(self.current_music_path)
+            # 如果从正常随机播放第一次点击上一次播放，抛弃正在播放的音乐行号
+            if old_index == self.music_play_history_ids[-1]:
+                self.music_play_history_ids.pop()
+            # 播放前一首随机音乐
+            index = self.music_play_history_ids.pop()
+            new_music_path = music_list[index]
+            self.__dict__["musicPath"].set(new_music_path)
+            self.current_music_path = new_music_path
+            self.init_control_button_img()
+            self.music_start()
+            sel_index = self.music_play_list.index(new_music_path)
+            self.set_music_list_window_selection(sel_index)
+
+    def clear_music_play_history(self, event=None):
+        self.music_play_history_ids.clear()
 
     def next_music(self, event=None):
         if self.__dict__["playOption"].get() == "单曲播放":
             self.music_start()
         elif self.__dict__["playOption"].get() == "随机播放":
-            self.list_random_music_play(self.music_play_list)
+            self.list_next_random_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "顺序播放":
             self.list_next_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "收藏顺序":
             self.list_next_music_play(self.star_music_path_list)
         elif self.__dict__["playOption"].get() == "收藏随机":
-            self.list_random_music_play(self.star_music_path_list)
+            self.list_next_random_music_play(self.star_music_path_list)
 
     def prev_music(self, event=None):
         if self.__dict__["playOption"].get() == "随机播放":
-            self.list_random_music_play(self.music_play_list)
+            self.list_prev_random_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "顺序播放":
             self.list_prev_music_play(self.music_play_list)
         elif self.__dict__["playOption"].get() == "收藏顺序":
             self.list_prev_music_play(self.star_music_path_list)
         elif self.__dict__["playOption"].get() == "收藏随机":
-            self.list_random_music_play(self.star_music_path_list)
+            self.list_prev_random_music_play(self.star_music_path_list)
 
     def music_stop(self, event=None):
         self.init_control_button_img()
