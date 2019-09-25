@@ -172,6 +172,7 @@ class Window(ttk.Frame):
         self.music_dir_path = filedialog.askdirectory()
         self.init_music_list(self.music_dir_path)
         self.read_star_config(self.music_dir_path)
+        self.clear_music_play_history()
 
     def key_event(self, event=None):
         # 摁空格键暂停或恢复音乐播放
@@ -440,6 +441,7 @@ class Window(ttk.Frame):
             self.music_start()
             sel_index = self.music_play_list.index(new_music_path)
             self.set_music_list_window_selection(sel_index)
+            print(self.music_play_history_ids)
 
     def clear_music_play_history(self, event=None):
         self.music_play_history_ids.clear()
