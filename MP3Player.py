@@ -441,7 +441,6 @@ class Window(ttk.Frame):
             self.music_start()
             sel_index = self.music_play_list.index(new_music_path)
             self.set_music_list_window_selection(sel_index)
-            print(self.music_play_history_ids)
 
     def clear_music_play_history(self, event=None):
         self.music_play_history_ids.clear()
