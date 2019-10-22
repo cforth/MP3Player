@@ -64,7 +64,7 @@
   "musicListTreeview": {
     "class": "Treeview",
     "bind": {"<Double-1>": "double_click_music_callback"},
-    "string": {"show": "headings", "columns": ["a", "b", "c"]},
+    "string": {"show": "headings", "columns": ["a", "b", "c", "d"]},
     "int": {"height":10},
     "grid": {"row":3, "column":0, "columnspan": 5, "sticky":["W", "E", "N", "S"]}
   },

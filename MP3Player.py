@@ -132,6 +132,8 @@ class Window(ttk.Frame):
         self.master.rowconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(3, weight=1)
+        # 记录歌曲播放次数的字典
+        self.music_play_times_dict = {}
         # 读取配置文件
         self.read_config("./configs/config.json")
         # 记录播放过的音乐行号
@@ -170,6 +172,7 @@ class Window(ttk.Frame):
     def file_from_button_callback(self, event=None):
         self.save_config("./configs/config.json")
         self.music_dir_path = filedialog.askdirectory()
+        self.read_music_play_times(self.music_dir_path)
         self.init_music_list(self.music_dir_path)
         self.read_star_config(self.music_dir_path)
         self.clear_music_play_history()
@@ -184,6 +187,16 @@ class Window(ttk.Frame):
         # 左方向键上一首
         elif event.keycode == 37:
             self.prev_music()
+
+    def read_music_play_times(self, music_dir_path):
+        # 读取音乐文件夹的收藏列表
+        current_music_dir = music_dir_path
+        star_music_config_path = os.path.join('./configs', get_str_md5(current_music_dir) + ".json")
+        if os.path.exists(star_music_config_path):
+            with open(star_music_config_path, "r") as sf:
+                star_configs = json.load(sf)
+                if star_configs.get("music_play_times_dict") and star_configs["music_play_times_dict"]:
+                    self.music_play_times_dict = star_configs["music_play_times_dict"]
 
     def read_star_config(self, music_dir_path):
         # 读取音乐文件夹的收藏列表
@@ -206,6 +219,7 @@ class Window(ttk.Frame):
         with open(config_path, "r") as f:
             configs = json.load(f)
             if configs:
+                self.read_music_play_times(configs["music_dir_path"])
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
                 if configs["current_music_path"] in self.music_play_list:
@@ -228,11 +242,19 @@ class Window(ttk.Frame):
                 star_index_path_list.append(self.music_play_list[i])
             star_configs = dict()
             star_configs["star_index_path_list"] = star_index_path_list
+            star_configs["music_play_times_dict"] = self.music_play_times_dict
             star_music_config_path = os.path.join('./configs', get_str_md5(self.music_dir_path) + ".json")
             with open(star_music_config_path, "w") as f:
                 json.dump(star_configs, f)
             with open(config_path, "w") as f:
                 json.dump(configs, f)
+
+    # 记录音乐播放的次数
+    def count_music_play_times(self, music_path):
+        if self.music_play_times_dict.get(music_path):
+            self.music_play_times_dict[music_path] += 1
+        else:
+            self.music_play_times_dict[music_path] = 1
 
     # 在顶层窗口关闭时，先结束音乐播放线程
     def close_event(self, event=None):
@@ -368,6 +390,7 @@ class Window(ttk.Frame):
             self.player = Player(self.__dict__["musicPath"].get().encode('utf-8'), now_volume, start_seconds, self)
             self.player.start()
             self.play_time_count_start(start_seconds=start_seconds)
+            self.count_music_play_times(music_path)
         else:
             self.music_pause_restore()
 
@@ -523,11 +546,13 @@ class Window(ttk.Frame):
         music_list.configure(yscrollcommand=music_list_vbar.set)
         # 表格的标题
         music_list.column("a", width=50, anchor="center")
-        music_list.column("b", width=50, anchor="center")
-        music_list.column("c", width=650, anchor="w")
+        music_list.column("b", width=10, anchor="center")
+        music_list.column("c", width=600, anchor="w")
+        music_list.column("d", width=50, anchor="center")
         music_list.heading("a", text="序号")
         music_list.heading("b", text=" ")
         music_list.heading("c", text="音乐名称")
+        music_list.heading("d", text="播放热度")
 
     # 清空表格
     def clear_music_list_window(self):
@@ -567,8 +592,13 @@ class Window(ttk.Frame):
         # 更新插入新节点
         for i in range(0, len(music_name_list)):
             tree_view_id = self.get_tree_view_iid(i)
+            music_path = os.path.join(os.path.dirname(self.current_music_path), music_name_list[i]).replace('\\', '/')
+            if self.music_play_times_dict.get(music_path):
+                play_times = self.music_play_times_dict[music_path]
+            else:
+                play_times = 0
             # 根据iid插入到TreeView中
-            music_list.insert("", "end", iid=tree_view_id, values=(i + 1, " ", music_name_list[i]), tags=["normal"])
+            music_list.insert("", "end", iid=tree_view_id, values=(i + 1, " ", music_name_list[i], play_times), tags=["normal"])
 
     # 音乐列表双击事件处理
     def double_click_music_callback(self, event=None):
