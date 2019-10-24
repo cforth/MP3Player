@@ -255,6 +255,7 @@ class Window(ttk.Frame):
             self.music_play_times_dict[music_path] += 1
         else:
             self.music_play_times_dict[music_path] = 1
+        self.update_music_play_times(music_path, self.music_play_list)
 
     # 在顶层窗口关闭时，先结束音乐播放线程
     def close_event(self, event=None):
@@ -665,6 +666,20 @@ class Window(ttk.Frame):
         for i in star_music_index_list:
             music_list_widget.item(children[i], tags=["star"])
             music_list_widget.set(children[i], column=1, value="★")
+
+    # 更新在音乐列表中的音乐播放次数
+    def update_music_play_times(self, music_path, music_path_list):
+        if music_path not in music_path_list:
+            return
+        if self.music_play_times_dict and self.music_play_times_dict.get(music_path):
+            play_times = self.music_play_times_dict[music_path]
+        else:
+            play_times = 0
+        index = music_path_list.index(music_path)
+        # 找到musicListTreeview控件的引用
+        music_list_widget = getattr(self, "musicListTreeview")
+        children = music_list_widget.get_children()
+        music_list_widget.set(children[index], column=3, value=play_times)
 
 
 if __name__ == '__main__':
