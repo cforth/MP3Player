@@ -171,6 +171,7 @@ class Window(ttk.Frame):
 
     def file_from_button_callback(self, event=None):
         self.save_config("./configs/config.json")
+        self.music_play_times_dict = {}
         self.music_dir_path = filedialog.askdirectory()
         self.read_music_play_times(self.music_dir_path)
         self.init_music_list(self.music_dir_path)
