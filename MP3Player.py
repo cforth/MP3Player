@@ -143,8 +143,9 @@ class Window(ttk.Frame):
         # 音乐列表窗口右键菜单
         self.muisc_list_menu = tk.Menu(self, tearoff=0)
         self.muisc_list_menu.add_command(label="添加收藏", command=self.on_add_star_music)
-        self.muisc_list_menu.add_separator()
         self.muisc_list_menu.add_command(label="取消收藏", command=self.on_del_star_music)
+        self.muisc_list_menu.add_separator()
+        self.muisc_list_menu.add_command(label="复制名称", command=self.on_copy_music_name)
         music_list = getattr(self, "musicListTreeview")
         music_list.bind("<Button-3>", self.pop_menu)
 
@@ -659,6 +660,14 @@ class Window(ttk.Frame):
             children = music_list_widget.get_children()
             music_list_widget.item(children[sel_index], tags=["normal"])
             music_list_widget.set(children[sel_index], column=1, value="")
+
+    # 右键菜单复制歌曲名称
+    def on_copy_music_name(self, event=None):
+        music_list = getattr(self, "musicListTreeview")
+        item_values = music_list.item(music_list.selection()[0])['values']
+        music_name = item_values[2] if item_values else ""
+        self.clipboard_clear()
+        self.clipboard_append(music_name)
 
     # 根据音乐行号列表将音乐播放列表中收藏歌曲标注
     def set_star_music(self, star_music_index_list):
