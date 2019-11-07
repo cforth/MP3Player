@@ -7,6 +7,7 @@ import os
 import random
 import eyed3
 import hashlib
+import operator
 from eyed3 import mp3
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
@@ -134,6 +135,8 @@ class Window(ttk.Frame):
         self.rowconfigure(3, weight=1)
         # 记录歌曲播放次数的字典
         self.music_play_times_dict = {}
+        # 记录热度播放顺序的列表
+        self.favor_music_list = []
         # 读取配置文件
         self.read_config("./configs/config.json")
         # 记录播放过的音乐行号
@@ -397,12 +400,15 @@ class Window(ttk.Frame):
         else:
             self.music_pause_restore()
 
-    def list_next_music_play(self, music_list):
+    def list_next_music_play(self, music_list, restart=False):
         old_music_path = self.current_music_path
-        if old_music_path not in music_list:
-            index = -1
+        if not restart:
+            if old_music_path not in music_list:
+                index = -1
+            else:
+                index = music_list.index(old_music_path)
         else:
-            index = music_list.index(old_music_path)
+            index = -1
         if not music_list or index == len(music_list) - 1:
             return
         else:
@@ -482,6 +488,13 @@ class Window(ttk.Frame):
             self.list_next_music_play(self.star_music_path_list)
         elif self.__dict__["playOption"].get() == "收藏随机":
             self.list_next_random_music_play(self.star_music_path_list)
+        elif self.__dict__["playOption"].get() == "热度播放":
+            if not self.favor_music_list:
+                favor_musics = sorted(self.music_play_times_dict.items(), key=operator.itemgetter(1), reverse=True)
+                self.favor_music_list = [item[0] for item in favor_musics]
+                self.list_next_music_play(self.favor_music_list, restart=True)
+            else:
+                self.list_next_music_play(self.favor_music_list)
 
     def prev_music(self, event=None):
         if self.__dict__["playOption"].get() == "随机播放":
