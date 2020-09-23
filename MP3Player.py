@@ -194,6 +194,7 @@ class Window(ttk.Frame):
             self.prev_music()
 
     def read_music_play_times(self, music_dir_path):
+        self.music_play_times_dict = {}
         # 读取音乐文件夹的收藏列表
         current_music_dir = music_dir_path
         star_music_config_path = os.path.join('./configs', get_str_md5(current_music_dir) + ".json")
@@ -201,9 +202,11 @@ class Window(ttk.Frame):
             with open(star_music_config_path, "r") as sf:
                 star_configs = json.load(sf)
                 if star_configs.get("music_play_times_dict") and star_configs["music_play_times_dict"]:
-                    self.music_play_times_dict = star_configs["music_play_times_dict"]
+                    for k, v in star_configs["music_play_times_dict"].items():
+                        self.music_play_times_dict[self.music_dir_path+'/'+k] = v
 
     def read_star_config(self, music_dir_path):
+        self.star_music_path_list = []
         # 读取音乐文件夹的收藏列表
         current_music_dir = music_dir_path
         star_music_config_path = os.path.join('./configs', get_str_md5(current_music_dir) + ".json")
@@ -211,7 +214,8 @@ class Window(ttk.Frame):
             with open(star_music_config_path, "r") as sf:
                 star_configs = json.load(sf)
                 if star_configs.get("star_index_path_list") and star_configs["star_index_path_list"]:
-                    self.star_music_path_list = star_configs["star_index_path_list"]
+                    for s in star_configs["star_index_path_list"]:
+                        self.star_music_path_list.append(self.music_dir_path + '/' + s)
                     for x in self.star_music_path_list:
                         if x in self.music_play_list:
                             star_music_index = self.music_play_list.index(x)
@@ -224,6 +228,8 @@ class Window(ttk.Frame):
         with open(config_path, "r") as f:
             configs = json.load(f)
             if configs:
+                if configs["music_dir_path"]:
+                    self.music_dir_path = configs["music_dir_path"]
                 self.read_music_play_times(configs["music_dir_path"])
                 self.init_music_list(configs["music_dir_path"], configs["current_music_path"])
                 self.__dict__["playOption"].set(configs["playOption"])
@@ -244,10 +250,13 @@ class Window(ttk.Frame):
             star_index_list = sorted(self.star_music_index_list)
             star_index_path_list = []
             for i in star_index_list:
-                star_index_path_list.append(self.music_play_list[i])
+                star_index_path_list.append(os.path.basename(self.music_play_list[i]))
             star_configs = dict()
             star_configs["star_index_path_list"] = star_index_path_list
-            star_configs["music_play_times_dict"] = self.music_play_times_dict
+            music_play_times_dict = dict()
+            for k, v in self.music_play_times_dict.items():
+                music_play_times_dict[os.path.basename(k)] = v
+            star_configs["music_play_times_dict"] = music_play_times_dict
             star_music_config_path = os.path.join('./configs', get_str_md5(self.music_dir_path) + ".json")
             with open(star_music_config_path, "w") as f:
                 json.dump(star_configs, f)
