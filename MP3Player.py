@@ -12,6 +12,7 @@ from eyed3 import mp3
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 from json2gui import *
+from LyricUtils import read_lyric
 
 
 # 字符串MD5生成
@@ -141,6 +142,8 @@ class Window(ttk.Frame):
         self.read_config("./configs/config.json")
         # 记录播放过的音乐行号
         self.music_play_history_ids = []
+        # 记录歌词字典
+        self.lyric_dict = {}
 
     def init_menu(self):
         # 音乐列表窗口右键菜单
@@ -299,17 +302,33 @@ class Window(ttk.Frame):
         secs = int(time_str[time_str.index(":")+1:])
         return mins * 60 + secs
 
-    # 更新内部的定时器
-    def _update_timer(self):
+    # 计算歌曲正在播放的秒数
+    def _get_play_time(self):
         current_time = datetime.datetime.now()
         time_obj = current_time - self._play_current_time
         secs = time_obj.seconds + self.start_seconds
+        milliseconds = secs * 1000 + time_obj.microseconds / 1000
+        return secs, milliseconds
+
+    # 获得当前毫秒数正在播放的歌词
+    def _get_current_lyric_str(self, secs):
+        if self.lyric_dict.get(secs):
+            return self.lyric_dict[secs]
+        else:
+            return ""
+
+    # 更新内部的定时器
+    def _update_timer(self):
+        secs, milliseconds = self._get_play_time()
         # 更新进度条
-        millisecond = secs * 1000 + time_obj.microseconds/1000
-        self.__dict__["music_progress_scale_value"].set(millisecond/(self.music_duration*10))
+        self.__dict__["music_progress_scale_value"].set(milliseconds/(self.music_duration*10))
         self.__dict__["playTime"].set(self._format_time(secs))
         if self._player_running:
             self._play_time_count_timer = self.after(1000, self._update_timer)
+        # 更新歌词
+        lyric_str = self._get_current_lyric_str(int(secs))
+        if lyric_str:
+            self.__dict__["lyric"].set(lyric_str)
 
     # 启动计时器
     def play_time_count_start(self, event=None, start_seconds=0.0):
@@ -373,6 +392,10 @@ class Window(ttk.Frame):
         if not music_path or not os.path.exists(music_path):
             self.__dict__["musicPath"].set("")
             return
+
+        # 获取歌词字典，如果有的话
+        self.__dict__["lyric"].set("")
+        self.lyric_dict = read_lyric('./lyric/' + os.path.basename(self.current_music_path)[:-3] + "lrc")
 
         # 设置音乐时长
         music_file = mp3.Mp3AudioFile(music_path)

@@ -41,10 +41,17 @@
     "string": {"font": "Arial, 12", "background": "black", "foreground": "white"},
     "grid": {"row":1, "column":0, "columnspan": 5, "sticky":["W", "E", "N", "S"]}
   },
+  "lyricLabel": {
+    "class": "Label",
+    "var": "lyric",
+    "int": {"height": 1},
+    "string": {"font": "Arial, 12", "background": "black", "foreground": "white"},
+    "grid": {"row":2, "column":0, "columnspan": 5, "sticky":["W", "E", "N", "S"]}
+  },
   "playTimeLabel": {
     "class": "Label",
     "var": "playTime",
-    "grid": {"row":2, "column":0, "sticky":["W", "E"]}
+    "grid": {"row":3, "column":0, "sticky":["W", "E"]}
   },
   "musicProgressScale": {
     "class": "Scale",
@@ -54,51 +61,51 @@
     "bind": {"<ButtonRelease-1>": "set_music_progress",
              "<Button-1>": "play_time_count_pause",
              "<B1-Motion>": "set_music_start_time"},
-    "grid": {"row":2, "column":1, "columnspan": 3,"sticky":["W", "E"]}
+    "grid": {"row":3, "column":1, "columnspan": 3,"sticky":["W", "E"]}
   },
   "musicTimeLabel": {
     "class": "Label",
     "var": "musicTime",
-    "grid": {"row":2, "column":4, "sticky":["W", "E"]}
+    "grid": {"row":3, "column":4, "sticky":["W", "E"]}
   },
   "musicListTreeview": {
     "class": "Treeview",
     "bind": {"<Double-1>": "double_click_music_callback"},
     "string": {"show": "headings", "columns": ["a", "b", "c", "d"]},
     "int": {"height":10},
-    "grid": {"row":3, "column":0, "columnspan": 5, "sticky":["W", "E", "N", "S"]}
+    "grid": {"row":4, "column":0, "columnspan": 5, "sticky":["W", "E", "N", "S"]}
   },
   "musicListVbar": {
     "class": "Scrollbar",
     "string": {"orient": "vertical"},
-    "grid": {"row":3, "column":5, "sticky":["N", "S"]}
+    "grid": {"row":4, "column":5, "sticky":["N", "S"]}
   },
     "prevMusicButton": {
     "class": "Button",
     "bind": {"<Button-1>": "prev_music"},
     "int": {"width": 10},
     "string": {"text": "前一首"},
-    "grid": {"row":4, "column":0, "sticky":["W", "E"]}
+    "grid": {"row":5, "column":0, "sticky":["W", "E"]}
   },
     "nextMusicButton": {
     "class": "Button",
     "bind": {"<Button-1>": "next_music"},
     "int": {"width": 10},
     "string": {"text": "下一首"},
-    "grid": {"row":4, "column":2, "sticky":["W", "E"]}
+    "grid": {"row":5, "column":2, "sticky":["W", "E"]}
   },
   "volumeOnOffButton": {
     "class": "Button",
     "bind": {"<Button-1>": "volume_on_off"},
     "int": {"width": 15},
     "string": {"text": "音量开"},
-    "grid": {"row":4, "column":3, "sticky":["W", "E"]}
+    "grid": {"row":5, "column":3, "sticky":["W", "E"]}
   },
   "musicVolumeScale": {
     "class": "Scale",
     "string": {"orient": "horizontal"},
     "int": {"from_": 0, "to": 100},
     "bind": {"<ButtonRelease-1>": "set_music_scale_volume"},
-    "grid": {"row":4, "column":4, "sticky":["W", "E"]}
+    "grid": {"row":5, "column":4, "sticky":["W", "E"]}
   }
 }
