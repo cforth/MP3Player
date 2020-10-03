@@ -133,7 +133,7 @@ class Window(ttk.Frame):
         self.master.columnconfigure(0, weight=1)
         self.master.rowconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
-        self.rowconfigure(3, weight=1)
+        self.rowconfigure(4, weight=1)
         # 记录歌曲播放次数的字典
         self.music_play_times_dict = {}
         # 记录热度播放顺序的列表
