@@ -29,7 +29,3 @@ def read_lyric(lyric_path):
                     lyric_str_dirt[get_lyric_seconds(t)] = lyric_str
 
     return lyric_str_dirt
-
-
-# print(read_lyric("./lyric/许冠杰 - 浪子心声.lrc"))
-# print(read_lyric("./lyric/展展与罗罗 - 沙漠骆驼.lrc"))

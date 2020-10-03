@@ -395,7 +395,7 @@ class Window(ttk.Frame):
 
         # 获取歌词字典，如果有的话
         self.__dict__["lyric"].set("")
-        self.lyric_dict = read_lyric('./lyric/' + os.path.basename(self.current_music_path)[:-3] + "lrc")
+        self.lyric_dict = read_lyric(os.path.join(self.music_dir_path, os.path.basename(self.current_music_path)[:-3]+"lrc"))
 
         # 设置音乐时长
         music_file = mp3.Mp3AudioFile(music_path)
