@@ -61,11 +61,18 @@
     "bind": {"<ButtonRelease-1>": "set_music_progress",
              "<Button-1>": "play_time_count_pause",
              "<B1-Motion>": "set_music_start_time"},
-    "grid": {"row":3, "column":1, "columnspan": 3,"sticky":["W", "E"]}
+    "grid": {"row":3, "column":1, "columnspan": 2,"sticky":["W", "E"]}
   },
   "musicTimeLabel": {
     "class": "Label",
     "var": "musicTime",
+    "grid": {"row":3, "column":3, "sticky":["W", "E"]}
+  },
+  "searchButton": {
+    "class": "Button",
+    "bind": {"<Button-1>": "music_search"},
+    "int": {"width": 15},
+    "string": {"text": "搜索"},
     "grid": {"row":3, "column":4, "sticky":["W", "E"]}
   },
   "musicListTreeview": {

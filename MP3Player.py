@@ -11,6 +11,7 @@ import operator
 from eyed3 import mp3
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
+import tkinter.simpledialog
 from json2gui import *
 from LyricUtils import read_lyric
 
@@ -90,6 +91,7 @@ class Window(ttk.Frame):
         self.prev_play_img = tk.PhotoImage(file="./resources/prev_play.png")
         self.volume_on_img = tk.PhotoImage(file="./resources/volume_on.png")
         self.volume_off_img = tk.PhotoImage(file="./resources/volume_off.png")
+        self.music_search_img = tk.PhotoImage(file="./resources/search.png")
         # 从json自动设置UI控件
         create_ui(self, ui_json)
         # 从json自动绑定事件
@@ -129,6 +131,7 @@ class Window(ttk.Frame):
         self.__dict__["prevMusicButton"]["image"] = self.prev_play_img
         self.__dict__["nextMusicButton"]["image"] = self.next_play_img
         self.__dict__["volumeOnOffButton"]["image"] = self.volume_on_img
+        self.__dict__["searchButton"]["image"] = self.music_search_img
         self.grid(row=0, column=0, sticky=(tk.N, tk.S, tk.E, tk.W))
         self.master.columnconfigure(0, weight=1)
         self.master.rowconfigure(0, weight=1)
@@ -735,6 +738,16 @@ class Window(ttk.Frame):
         music_list_widget = getattr(self, "musicListTreeview")
         children = music_list_widget.get_children()
         music_list_widget.set(children[index], column=3, value=play_times)
+
+    # 在播放列表中搜索歌曲
+    def music_search(self, event=None):
+        music_word = tkinter.simpledialog.askstring(title='搜索歌曲', prompt='请输入歌名关键词：', initialvalue='')
+        if music_word:
+            for name in self.music_play_list:
+                if music_word.lower() in name.lower():
+                    sel_index = self.music_play_list.index(name)
+                    self.set_music_list_window_selection(sel_index)
+                    return
 
 
 if __name__ == '__main__':
