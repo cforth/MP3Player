@@ -1,5 +1,14 @@
 import re
 import os
+import chardet
+
+
+# 判断文件编码
+def get_txt_encoding(txt_path):
+    with open(txt_path, 'rb') as f:
+        str_bytes = f.read()
+        encoding = chardet.detect(str_bytes)['encoding']
+    return encoding
 
 
 # 将歌词时间戳字符串转为秒数，歌词文件要符合lrc格式
@@ -15,7 +24,8 @@ def read_lyric(lyric_path):
         return {}
 
     lyric_str_dirt = {}
-    with open(lyric_path, "r", encoding="utf-8") as f:
+    txt_encoding = get_txt_encoding(lyric_path)
+    with open(lyric_path, "r", encoding=txt_encoding) as f:
         lyric_list = f.readlines()
     for lyric_line in lyric_list:
         lyric_line = lyric_line.replace("\r", "")
