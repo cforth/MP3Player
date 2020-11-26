@@ -147,12 +147,15 @@ class Window(ttk.Frame):
         self.music_play_history_ids = []
         # 记录歌词字典
         self.lyric_dict = {}
+        # 记录等待播放的列表
+        self.wait_play_list = []
 
     def init_menu(self):
         # 音乐列表窗口右键菜单
         self.muisc_list_menu = tk.Menu(self, tearoff=0)
         self.muisc_list_menu.add_command(label="添加收藏", command=self.on_add_star_music)
         self.muisc_list_menu.add_command(label="取消收藏", command=self.on_del_star_music)
+        self.muisc_list_menu.add_command(label="下一首播放", command=self.add_wait_play_list)
         self.muisc_list_menu.add_separator()
         self.muisc_list_menu.add_command(label="复制名称", command=self.on_copy_music_name)
         music_list = getattr(self, "musicListTreeview")
@@ -479,14 +482,8 @@ class Window(ttk.Frame):
             music_play_list_length = len(music_list)
             index = random.randint(0, music_play_list_length - 1)
             new_music_path = music_list[index]
-            self.__dict__["musicPath"].set(new_music_path)
-            self.current_music_path = new_music_path
-            self.init_control_button_img()
+            self.music_play_preparation(new_music_path)
             self.music_start()
-            sel_index = self.music_play_list.index(new_music_path)
-            self.set_music_list_window_selection(sel_index)
-            # 记录随机播放过的音乐行号
-            self.music_play_history_ids.append(index)
 
     def list_prev_random_music_play(self, music_list):
         if not music_list or not self.music_play_history_ids:
@@ -502,34 +499,46 @@ class Window(ttk.Frame):
             # 播放前一首随机音乐
             index = self.music_play_history_ids.pop()
             new_music_path = music_list[index]
-            self.__dict__["musicPath"].set(new_music_path)
-            self.current_music_path = new_music_path
-            self.init_control_button_img()
+            self.music_play_preparation(new_music_path)
             self.music_start()
-            sel_index = self.music_play_list.index(new_music_path)
-            self.set_music_list_window_selection(sel_index)
 
     def clear_music_play_history(self, event=None):
         self.music_play_history_ids.clear()
 
+    # 播放音乐之前的准备工作
+    def music_play_preparation(self, music_path):
+        self.__dict__["musicPath"].set(music_path)
+        self.current_music_path = music_path
+        self.init_control_button_img()
+        sel_index = self.music_play_list.index(music_path)
+        self.set_music_list_window_selection(sel_index)
+        # 记录播放过的音乐行号
+        self.music_play_history_ids.append(sel_index)
+
     def next_music(self, event=None):
-        if self.__dict__["playOption"].get() == "单曲播放":
+        # 先判断有没有等待播放列表
+        if self.wait_play_list:
+            new_music_path = self.wait_play_list.pop()
+            self.music_play_preparation(new_music_path)
             self.music_start()
-        elif self.__dict__["playOption"].get() == "随机播放":
-            self.list_next_random_music_play(self.music_play_list)
-        elif self.__dict__["playOption"].get() == "顺序播放":
-            self.list_next_music_play(self.music_play_list)
-        elif self.__dict__["playOption"].get() == "收藏顺序":
-            self.list_next_music_play(self.star_music_path_list)
-        elif self.__dict__["playOption"].get() == "收藏随机":
-            self.list_next_random_music_play(self.star_music_path_list)
-        elif self.__dict__["playOption"].get() == "热度播放":
-            if not self.favor_music_list:
-                favor_musics = sorted(self.music_play_times_dict.items(), key=operator.itemgetter(1), reverse=True)
-                self.favor_music_list = [item[0] for item in favor_musics]
-                self.list_next_music_play(self.favor_music_list, restart=True)
-            else:
-                self.list_next_music_play(self.favor_music_list)
+        else:
+            if self.__dict__["playOption"].get() == "单曲播放":
+                self.music_start()
+            elif self.__dict__["playOption"].get() == "随机播放":
+                self.list_next_random_music_play(self.music_play_list)
+            elif self.__dict__["playOption"].get() == "顺序播放":
+                self.list_next_music_play(self.music_play_list)
+            elif self.__dict__["playOption"].get() == "收藏顺序":
+                self.list_next_music_play(self.star_music_path_list)
+            elif self.__dict__["playOption"].get() == "收藏随机":
+                self.list_next_random_music_play(self.star_music_path_list)
+            elif self.__dict__["playOption"].get() == "热度播放":
+                if not self.favor_music_list:
+                    favor_musics = sorted(self.music_play_times_dict.items(), key=operator.itemgetter(1), reverse=True)
+                    self.favor_music_list = [item[0] for item in favor_musics]
+                    self.list_next_music_play(self.favor_music_list, restart=True)
+                else:
+                    self.list_next_music_play(self.favor_music_list)
 
     def prev_music(self, event=None):
         if self.__dict__["playOption"].get() == "随机播放":
@@ -716,6 +725,11 @@ class Window(ttk.Frame):
         music_name = item_values[2] if item_values else ""
         self.clipboard_clear()
         self.clipboard_append(music_name)
+
+    # 右键菜单增加到等待播放列表
+    def add_wait_play_list(self, event=None):
+        sel_index = self.get_music_list_window_selection()
+        self.wait_play_list.append(self.music_play_list[sel_index])
 
     # 根据音乐行号列表将音乐播放列表中收藏歌曲标注
     def set_star_music(self, star_music_index_list):
