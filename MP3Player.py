@@ -66,14 +66,16 @@ class Player(threading.Thread):
             if self.stop_state:
                 self.track.stop()  # 停止播放
                 return
-            elif not self.track.get_busy():
-                if self.master:
-                    self.master.event_generate("<<CouldMusicStop>>", when="tail")
-                return
-            elif not self.stop_state and self.pause_state:
+            # 要求暂停
+            elif self.pause_state:
                 self.track.pause()  # 暂停播放
-            elif not self.stop_state and not self.pause_state:
+            else:
                 self.track.unpause()  # 恢复播放
+                # 没有歌在播放，可能出错了
+                if not self.track.get_busy():
+                    if self.master:
+                        self.master.event_generate("<<CouldMusicStop>>", when="tail")
+                    return
 
 
 # 窗口类
