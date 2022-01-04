@@ -452,6 +452,11 @@ class Window(ttk.Frame):
         else:
             self.init_control_button_img()
             new_music_path = music_list[index + 1]
+            # 如果在正在播放列表中找不到下一首歌曲，则继续下下一首
+            while new_music_path not in self.music_play_list:
+                index += 1
+                new_music_path = music_list[index]
+
             self.__dict__["musicPath"].set(new_music_path)
             self.current_music_path = new_music_path
             self.music_start()
