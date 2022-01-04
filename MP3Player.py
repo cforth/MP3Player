@@ -452,11 +452,6 @@ class Window(ttk.Frame):
         else:
             self.init_control_button_img()
             new_music_path = music_list[index + 1]
-            # 如果在正在播放列表中找不到下一首歌曲，则继续下下一首
-            while new_music_path not in self.music_play_list:
-                index += 1
-                new_music_path = music_list[index]
-
             self.__dict__["musicPath"].set(new_music_path)
             self.current_music_path = new_music_path
             self.music_start()
@@ -540,7 +535,8 @@ class Window(ttk.Frame):
             elif self.__dict__["playOption"].get() == "热度播放":
                 if not self.favor_music_list:
                     favor_musics = sorted(self.music_play_times_dict.items(), key=operator.itemgetter(1), reverse=True)
-                    self.favor_music_list = [item[0] for item in favor_musics]
+                    # 只有播放列表中有计数的歌曲时才会放入热度播放列表
+                    self.favor_music_list = [item[0] for item in favor_musics if item[0] in self.music_play_list]
                     self.list_next_music_play(self.favor_music_list, restart=True)
                 else:
                     self.list_next_music_play(self.favor_music_list)
